@@ -1,0 +1,26 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* Custom styles */
+.nextra-content {
+  @apply max-w-none;
+}
+
+/* Custom callout styles */
+.callout {
+  @apply my-6 flex gap-2 rounded-lg border px-4 py-3;
+}
+
+.callout.info {
+  @apply border-blue-200 bg-blue-50 text-blue-900 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-100;
+}
+
+.callout.warning {
+  @apply border-yellow-200 bg-yellow-50 text-yellow-900 dark:border-yellow-800 dark:bg-yellow-950 dark:text-yellow-100;
+}
+
+.callout.error {
+  @apply border-red-200 bg-red-50 text-red-900 dark:border-red-800 dark:bg-red-950 dark:text-red-100;
+}
