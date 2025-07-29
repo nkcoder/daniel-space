@@ -20,10 +20,11 @@ export const viewport: Viewport = {
 
 const navbar = <Navbar logo={<span className="font-bold text-lg">Daniel's Space</span>} />;
 
+// TODO: tailwind css is not working
 const footer = (
   <Footer>
-    <div className="text-center">
-      <p className="text-sm text-gray-600 dark:text-gray-400">
+    <div className="text-center text-red-500">
+      <p className="text-xs text-red-600 dark:text-red-400 text-center">
         MIT {new Date().getFullYear()} © Daniel's Space. Built with ❤️ using Nextra.
       </p>
     </div>

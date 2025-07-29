@@ -9,13 +9,13 @@ const meta: MetaRecord = {
     title: "Projects",
     type: "page"
   },
-  docs: {
-    title: "Docs",
-    type: "doc",
-  },
   blogs: {
     title: "Blogs",
     type: "doc"
+  },
+  docs: {
+    title: "Docs",
+    type: "doc",
   },
 }
 
