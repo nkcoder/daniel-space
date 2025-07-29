@@ -1,4 +1,3 @@
-import type { NextConfig } from "next";
 import nextra from "nextra";
 
 // nextra-specific options
@@ -10,6 +9,7 @@ const withNextra = nextra({
 
 // regular next.js options
 export default withNextra({
+  reactStrictMode: true,
   experimental: {
     optimizePackageImports: ['nextra-theme-docs']
   }

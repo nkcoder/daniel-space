@@ -1,4 +1,10 @@
 export default {
-  'getting-started': 'Getting Started',
-  'advanced': 'Advanced'
+  'introduction': {
+    title: 'Introduction',
+    type: 'page'
+  },
+  'getting-started': {
+    title: 'Getting Started',
+    type: 'page'
+  }
 }

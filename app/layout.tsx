@@ -1,56 +1,56 @@
-import { Footer, Layout, Navbar } from 'nextra-theme-docs'
-import { Banner, Head } from 'nextra/components'
-import { getPageMap } from 'nextra/page-map'
-import 'nextra-theme-docs/style.css'
-import { Metadata } from 'next'
+import { Metadata, Viewport } from 'next';
+import { Footer, Layout, Navbar } from 'nextra-theme-docs';
+import 'nextra-theme-docs/style.css';
+import { getPageMap } from 'nextra/page-map';
+import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'My space',
-  description: 'Mostly about tech, but also about life'
-}
+  title: "Daniel's Space - Tech & Life",
+  description: 'A modern documentation site about technology, development, and life experiences',
+  icons: {
+    icon: '/favicon.ico',
+  },
+};
 
-const banner = (
-  <Banner>
-    <h1>Welcome to My Space</h1>
-    <p>Mostly about tech, but also about life</p>
-  </Banner>
-)
+export const viewport: Viewport = {
+  themeColor: '#3b82f6',
+  width: 'device-width',
+  initialScale: 1.0,
+};
 
-const navbar = (
-  <Navbar
-    logo={<b>Nextra</b>}
-    // ... Your additional navbar options
-  />
-)
-const footer = <Footer>MIT {new Date().getFullYear()} © Nextra.</Footer>
+const navbar = <Navbar logo={<span className="font-bold text-lg">Daniel's Space</span>} />;
+
+const footer = (
+  <Footer>
+    <div className="text-center">
+      <p className="text-sm text-gray-600 dark:text-gray-400">
+        MIT {new Date().getFullYear()} © Daniel's Space. Built with ❤️ using Nextra.
+      </p>
+    </div>
+  </Footer>
+);
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const pageMap = await getPageMap();
+
   return (
-    <html
-      // Not required, but good for SEO
-      lang="en"
-      // Required to be set
-      dir="ltr"
-      // Suggested by `next-themes` package https://github.com/pacocoursey/next-themes#with-app
-      suppressHydrationWarning
-    >
-      <Head
-      // ... Your additional head options
-      >
-        {/* Your additional tags should be passed as `children` of `<Head>` element */}
-      </Head>
+    <html lang="en" suppressHydrationWarning>
       <body>
         <Layout
-          banner={banner}
           navbar={navbar}
-          pageMap={await getPageMap()}
-          docsRepositoryBase="https://github.com/shuding/nextra/tree/main/docs"
+          pageMap={pageMap}
           footer={footer}
-          // ... Your additional layout options
+          sidebar={{
+            defaultMenuCollapseLevel: 1,
+            toggleButton: true,
+          }}
+          toc={{
+            backToTop: true,
+          }}
         >
           {children}
         </Layout>
       </body>
     </html>
-  )
+  );
 }
