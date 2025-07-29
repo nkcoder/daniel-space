@@ -1,0 +1,97 @@
+---
+title: "Security"
+description: "AWS security services including WAF, GuardDuty, AWS Config, Trusted Advisor, Inspector, Network Firewall, and DDoS mitigation strategies."
+---
+
+# Security
+
+## WAF
+
+- It is a web application firewall that protects web applications from web exploits
+    - allow all requests except the ones that you specify
+    - block all requests except the ones that you specify
+    - count the requests that match the properties that you specify
+
+- It can be associated with CloudFront, API Gateway, Application Load Balancer and AppSync.
+
+- An WAF **rule** defines how to inspect HTTP(S) web requests and the action to take on a request when it matches the inspection criteria.
+    - **A rate-based rule** counts incoming requests and rate limits requests when they are coming at too fast a rate. The rule aggregates requests according to your criteria, and counts and rate limits the aggregate groupings, based on the rule's evaluation window, request limit, and action settings.
+    - Rule actions: 
+        - Allow
+        - Block: by default, your protected AWS resource responds with an `HTTP 403 (forbidden)` status code
+        - Count:  counts the request but does not determine whether to allow it or block it
+        - CAPTCHA and Challenge: AWS WAF uses CAPTCHA puzzles and silent challenges to verify that the request is not coming from a bot, and AWS WAF uses tokens to track recent successful client responses.
+
+- Related services:
+    - Shield (advanced): managed DDoS protection service
+    - Guard Duty: it is a threat detection service that uses machine learning to detect and protect against threats
+    - Firewall Manager: centrally configure and manage firewall rules across accounts and applications.
+    - Amazon Detective: makes it easy to investigate, analyze, and quickly identify the **root cause** of potential security issues or suspicious activities
+
+## Guard Duty
+
+- It is a threat detection service that continuously monitors, analyzes, and processes AWS data sources and logs (VPC Flow logs, CloudTrail logs, DNS query logs, S3 etc.) in your AWS environment
+- It uses threat intelligence feeds, such as lists of malicious IP addresses and domains, file hashes, and machine learning (ML) models to **identify suspicious and potentially malicious activities**
+- Potential thread scenarios that GuardDuty can help detect:
+    - Compromised and exfiltrated AWS credentials
+    - Data exfiltration and destruction that can lead to a ransomware event. Unusual patterns of login events in the supported engine versions of Amazon Aurora and Amazon RDS databases, that indicate anomalous behavior.
+    - Unauthorized cryptomining activity in your EC2 instances and container workloads.
+    - Presence of malware in your EC2 instances and container workloads, and newly uploaded files in your S3 buckets.
+    - Operating system-level, networking, and file events that indicate unauthorized behavior on your EKS clusters, ECS-Fargate tasks, and EC2 instances and container workloads.
+- Use case focused protection plans:
+    - S3: Identifies potential security risks such as data exfiltration and destruction attempts in your S3 buckets.
+    - EKS: EKS Audit Log Monitoring analyzes Kubernetes audit logs from your Amazon EKS clusters for potentially suspicious and malicious activities.
+    - Runtime monitoring: Monitors and analyzes operating system-level events to detect potential runtime threats.
+    - RDS protection: Analyzes and profiles your RDS login activity for potential access threats to the supported Amazon Aurora and Amazon RDS databases.
+    - Lambda protection: Monitors Lambda network activity logs, starting with VPC flow logs, to detect threats to your AWS Lambda functions. Examples of these potential threats include cryptomining and communicating with malicious servers.
+- Integration with other security services:
+    - AWS Security Hub: gives you a comprehensive view of the security state of your AWS resources and helps you check your AWS environment against security industry standards and best practices.
+    - Amazon Detective: helps you analyze, investigate, and quickly identify the root cause of security findings or suspicious activities.
+    - Amazon EventBridges: helps you receive notifications and respond to GuardDuty security findings in near-real time.
+- GuardDuty Malware Protection for S3 only:
+    - Detect malicious files that are newly uploaded to your Amazon S3 buckets.
+    - Can be enabled independently, without enable GuardDuty
+## AWS Config
+
+- It's a service that enables you to assess, audit and evaluate the configurations of your AWS resources.
+- You can use AWS Config to evaluate the configuration settings of your AWS resources, check if the applied configuration in your resources violates any of the rules
+
+**Test**
+- A company needs to enforce strict compliance by tracing all configuration changes to any of its S3 buckets, and public accessible S3 buckets should also be identified automatically to avoid data breach. Which service should it use?
+- *Answer*: use AWS Config to set up a rule in the AWS account. 
+
+## Trusted Advisor
+
+- It provides recommendations to help you following AWS best practices to optimise your services and resources
+    - cost optimisation
+    - performance
+    - security
+    - fault tolerance
+    - service limits
+    - operational excellence
+
+## Amazon Inspector
+
+- It is a vulnerability management service that automatically discovers workloads and continually scans them for software vulnerabilities and unintended network exposure.
+- It discovers and scans EC2 instances, ECR container images, and Lambda functions.
+- When it detects a software vulnerability or unintended network exposure, it creates a finding and publish findings to EventBridge as finding events (which can then be processed by lambda or SNS/SQS)
+
+## AWS Network Firewall
+
+- A stateful, managed network firewall and intrusion detection and prevention service for your VPC
+- You can filter traffic at the perimeter of VPC, including filter traffic going to and coming from an internet gateway, NAT gateway, or over VPN or AWS Direct Connect
+- Supports domain name stateful network traffic inspection by creating *Allow* lists and *Deny* lists
+
+## How to mitigate DDoS(Distributed Denial-of-service) attacks
+
+DDoS attack: 
+  - can make your website or application unavailable to end users. 
+  - attackers use a variety of techniques that consume network or other resources, disrupting access for legitimate end users
+  
+Options to mitigate:
+  - use CloudFront for distributing both static and dynamic content
+  - use AWS Shield and AWS WAF
+  - Set up alerts in CloudWatch to look for high `Network In` and CPU utilisation metrics
+  - use an Application Load Balancer with Auto Scaling groups for EC2 instances to prevent direct Internet traffic to your RDS database by deploying it to a new private subnet
+
+- [AWS Best Practices for DDoS Resiliency](https://docs.aws.amazon.com/whitepapers/latest/aws-best-practices-ddos-resiliency/aws-best-practices-ddos-resiliency.html)
