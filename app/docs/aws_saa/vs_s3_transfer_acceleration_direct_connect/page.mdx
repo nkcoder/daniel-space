@@ -1,0 +1,55 @@
+---
+title: "S3 Transfer Acceleration vs Direct Connect"
+description: "Comparison of AWS data transfer solutions including S3 Transfer Acceleration, Direct Connect, VPN, and Snow family services for different use cases."
+---
+
+# S3 Transfer Acceleration vs Direct Connect
+
+When it comes to transferring data to and from AWS, there are several options available, each with its own use cases, benefits, and limitations. Below is a comparison of **S3 Transfer Acceleration**, **Direct Connect**, **VPN**, and the **Snow family** of services.
+
+## S3 Transfer Acceleration (TA)
+
+- a bucket-level feature that enables fast, easy and secure transfers of files over long distances between your client and an S3 bucket
+- how: it takes advantages of the globally distributed edge locations in CloudFront, as the data arrives at an edge location, the data is routed to S3 over an optimised network path
+- it's not suitable if transfer disruption is not tolerable, but you can utilise S3 **Multipart Upload**
+
+## AWS Direct Connect
+
+- The data will be transported through a private physical network connection between AWS and on-premise data centres.
+- It doesn't involve the Internet, instead it uses dedicated, private network connections between your intranet and AWS VPC.
+- It's a good choice if you will be transferring data to AWS on an ongoing basis
+
+## AWS VPN
+
+- Site-to-Site VPN: enables you to securely connect your on-premises network or branch office site to your VPC
+- Client VPN: enables you to securely connect users to on-premises network or AWS
+- Utilizes IPSe to establish **encrypted network connectivity** between your intranet and AWS VPC **over the Internet**.
+
+##  AWS Snowball
+
+- petabyte-scale data transport solution that uses secure appliances to transfer large amount data into and out of AWS
+- a good choice if:
+    - you need to more securely and quickly transfer terabytes to many petabytes of data to AWS
+    - if you don't want to make expensive upgrades to your network infrastructure
+    - if you frequently experience large backlogs of data
+    - if you're located in a physically isolated environment
+    - if you're in an area where high-bandwidth Internet connections are not available or cost-prohibitive
+- As a rule of thumb, if it takes more than one week to upload your data to AWS using the spare capacity of your existing Internet connection, then you should consider using Snow.
+    - For 100 Mbps connection, to transfer 100TB, you need more than 100 days.
+
+## AWS Snowball Edge
+
+- A type of Snowball device with on-board storage and compute power for select AWS capabilities
+- It can process data locally, run edge-computing workload, and transfer data to or from the AWS Cloud
+- It can transfer data at speeds faster than the Internet by shipping the data in the devices through a regional carrier.
+- Two options for device configurations: *Storage Optimized* and *Compute Optimized*.
+- Shipping: it make take up to 4 weeks to provision and prepare the device for your job before it is shipped (1 day or 2 days shipping).
+
+## AWS Snowmobile
+
+- exabyte-scale data transfer service, can transfer up to 100PB per Snowmobile
+- it is Snowball with larger storage capacity, it's a mobile truck
+- use Snowmobile if you need to migrate large datasets of 10PB or more in a single location
+- use Snowball if you need to migrate datasets less than 10PB or distributed in multiple locations
+
+- Ref: [S3 Transfer Acceleration vs Direct Connect vs VPN vs Snowball Edge vs Snowmobile](https://tutorialsdojo.com/s3-transfer-acceleration-vs-direct-connect-vs-vpn-vs-snowball-vs-snowmobile/?src=udemy)

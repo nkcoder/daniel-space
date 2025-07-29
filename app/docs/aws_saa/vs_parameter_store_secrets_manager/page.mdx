@@ -1,0 +1,64 @@
+---
+title: "Parameter Store vs Secrets Manager"
+description: "Comparison between AWS Systems Manager Parameter Store and Secrets Manager for storing configuration data and secrets, including use cases and cost considerations."
+---
+
+# Parameter Store vs Secrets Manager
+
+## Overview of Services
+
+a. AWS Systems Manager Parameter Store
+
+Parameter Store is a component of AWS Systems Manager that provides a centralized store to manage configuration data and secrets. It allows you to store data as plain text or encrypted data.
+
+b. AWS Secrets Manager
+
+Secrets Manager is a dedicated service designed specifically for managing, retrieving, and rotating secrets such as database credentials, API keys, and other sensitive information.
+
+## Typical Use Cases
+
+a. AWS Systems Manager Parameter Store
+
+- Configuration Management: Store non-sensitive configuration data like application settings, feature flags, URLs, and resource identifiers.
+- Simple Secrets Management: Handle basic secrets (*SecureString*) that do not require advanced features like automatic rotation.
+- Infrastructure as Code: Integrate with tools like AWS CloudFormation, Terraform, and others to manage configuration parameters.
+- Hierarchical Storage: Organize parameters in a hierarchical structure for better management and access control.
+
+b. AWS Secrets Manager
+
+- Sensitive Data Management: Store and manage sensitive information such as database credentials, API keys, OAuth tokens, and SSH keys.
+- Automatic Rotation: Automatically rotate secrets on a schedule or in response to events, supporting built-in integrations for databases and other services.
+- Fine-Grained Access Control: Implement more granular access policies and audit trails for secret access and usage.
+- Cross-Account Access: Share secrets securely across different AWS accounts.
+
+## Choosing Between Parameter Store and Secrets Manager
+
+When deciding between Parameter Store and Secrets Manager, consider the nature of the data you need to store and the required features:
+
+- Use Parameter Store If:
+  - You're storing non-sensitive configuration data (e.g., DB hostnames, environment settings, feature flags).
+  - You require a centralized configuration management solution without the need for automatic rotation.
+  - You want to minimize costs, especially when managing a large number of parameters.
+- Use Secrets Manager If:
+  - You're handling sensitive information that requires robust security measures (e.g., database passwords, API keys).
+  - You need automatic rotation of secrets to enhance security.
+  - You require fine-grained access control and audit capabilities for secret access.
+  - You benefit from built-in integrations for secret rotation with supported services.
+
+## Cost Considerations
+
+- Parameter Store:
+  - Standard Parameters: Free up to 10,000 API interactions per month.
+  - Advanced Parameters: Billed based on the number of parameters and API interactions.
+- Secrets Manager:
+  - Charged based on the number of secrets stored and API requests made.
+  - Additional Costs: Automatic rotation may incur additional Lambda charges.
+
+Recommendation: Use Parameter Store for non-sensitive and less frequently accessed data to minimize costs, and reserve Secrets Manager for critical, sensitive information that benefits from its advanced features.
+
+## Security Best Practices
+
+- Encryption: Always encrypt sensitive data at rest. Both Parameter Store and Secrets Manager support AWS KMS for encryption.
+- Access Control: Implement the principle of least privilege using IAM policies to restrict who or what can access specific parameters or secrets.
+- Audit and Monitoring: Enable AWS CloudTrail to monitor access and changes to your parameters and secrets for auditing purposes.
+- Regular Rotation: For sensitive data, especially secrets, implement regular rotation to minimize the risk of compromised credentials.

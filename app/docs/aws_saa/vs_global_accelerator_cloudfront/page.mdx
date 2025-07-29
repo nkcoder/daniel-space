@@ -1,0 +1,54 @@
+---
+title: "Global Accelerator vs CloudFront"
+description: "Comparison between AWS Global Accelerator and CloudFront, covering networking vs CDN capabilities, use cases, and when to choose each service."
+---
+
+# Global Accelerator vs CloudFront
+
+AWS Global Accelerator and AWS CloudFront are both services designed to improve the performance and availability of your applications, but they serve different purposes and use cases. 
+
+## AWS Global Accelerator
+
+Purpose: AWS Global Accelerator is a **networking service** that improves the availability and performance of your applications with global users by directing traffic through AWS's global network infrastructure.
+
+**Key Features**:
+- Global Traffic Management: Directs traffic to the optimal AWS endpoint (e.g., EC2 instances, Load Balancers) based on latency, health, and routing policies.
+- Static IP Addresses: Provides a pair of static IP addresses that act as a fixed entry point for your application, simplifying DNS management and providing stability.
+- Health Checks and Automatic Failover: Continuously checks the health of your endpoints and automatically reroutes traffic if an endpoint is unhealthy.
+- DDoS Protection: Integrates with AWS Shield for protection against DDoS attacks.
+- Multi-Region Redundancy: Can route traffic across multiple AWS regions for high availability.
+
+**Use Cases**:
+- Global Applications: Applications that serve a global audience and require low-latency access and high availability.
+- Disaster Recovery: Multi-region failover setups where traffic needs to be routed to the healthiest or closest endpoint.
+- Gaming, Media, or Real-Time Applications: Where low latency is critical, and global consistency is required.
+
+## AWS CloudFront
+
+Purpose: AWS CloudFront is a **Content Delivery Network (CDN) service** that delivers your content (such as web pages, videos, APIs) to users with low latency by caching content at edge locations around the world.
+
+**Key Features**:
+- Content Caching: Caches content at over 300 edge locations worldwide, reducing the load on your origin servers and improving performance.
+- Dynamic and Static Content Delivery: Can serve both static content (like images, videos) and dynamic content (APIs, websites).
+- HTTPS Support: Supports secure delivery of content over HTTPS, including custom SSL certificates.
+- Origin Shield: Provides an additional caching layer between CloudFront and your origin servers for improved cache hit rates.
+ - Lambda@Edge: Allows you to run code closer to users at edge locations, providing custom logic (e.g., header manipulation, URL rewrites) during the request/response cycle.
+
+**Use Cases**:
+ - Website and API Acceleration: Delivering static and dynamic content to users around the world with low latency.
+- Media Distribution: Streaming video, audio, or other large files globally.
+- Security: Enhancing security by serving content over HTTPS, integrating with AWS WAF, and using signed URLs/cookies.
+- Static Content: Accelerating the delivery of static content such as images, JavaScript, and CSS files.
+## Summary of Differences:
+
+- AWS Global Accelerator is focused on routing traffic to the optimal AWS endpoint (across regions or within a region) to improve application performance and availability for globally distributed users. It works at the network level and does not cache content.
+- AWS CloudFront is a CDN that caches and delivers content from edge locations to users, reducing latency by serving content closer to the user. It is ideal for speeding up the delivery of static and dynamic content, such as websites, APIs, and media files.
+
+**Choosing Between Global Accelerator and CloudFront**:
+- Use AWS Global Accelerator when you need to optimise global traffic routing, enhance availability, or provide consistent performance for applications hosted in multiple AWS regions or endpoints.
+- Use AWS CloudFront when you need to cache and deliver content quickly to a global audience, such as when serving websites, media files, or APIs.
+
+**Test**
+- A digital media company shares static content to tis premium users around the world. The company is looking for ways to reduce its server costs and securely deliver the data to customers globally with low latency. What's the most suitable and cost-effective way?
+- *Answer*: AWS CloudFront and S3
+  - AWS Global Accelerator is more suitable for non-HTTP use cases, such as gaming(UDP), IoT(MQTT), or Voice over IP, as well as for HTTP use cases that specifically require static IP or deterministic, fast regional failover.

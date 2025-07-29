@@ -17,6 +17,12 @@ const meta: MetaRecord = {
   network_networking: "Network - Networking",
   network_route53: "Network - Route 53",
   network_security: "Network - Security",
+  vs_eks_ecs: "VS - EKS vs ECS",
+  vs_global_accelerator_cloudfront: "VS - Global Accelerator vs CloudFront",
+  vs_parameter_store_secrets_manager: "VS - Parameter Store vs Secrets Manager",
+  vs_s3_transfer_acceleration_direct_connect: "VS - S3 Transfer Acceleration vs Direct Connect",
+  vs_storage_gateway_datasync: "VS - Storage Gateway vs DataSync",
+  vs_swf_step_functions: "VS - SWF vs Step Functions",
 };
 
 export default meta;

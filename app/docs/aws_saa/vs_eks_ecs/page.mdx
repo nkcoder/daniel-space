@@ -1,0 +1,77 @@
+---
+title: "EKS vs ECS"
+description: "Comparison between AWS EKS and ECS container orchestration services, covering core concepts, similarities, differences, and use cases."
+---
+
+# EKS vs ECS
+
+Both **AWS EKS** and **AWS ECS** are container orchestration services provided by AWS, but they differ in underlying architecture, flexibility, operational complexity, and use cases. Below is a detailed comparison.
+
+## Core Concepts
+
+| Feature               | EKS                                                                           | ECS                                                                            |
+| --------------------- | ----------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| Definition            | Managed Kubernetes service that allows you to run Kubernetes clusters on AWS. | AWS's native container orchestration service that does not require Kubernetes. |
+| Underlying Technology | Kubernetes (open-source container orchestration system).                      | AWS-proprietary orchestration platform (no Kubernetes).                        |
+| Launch Types          | Supports both Fargate and EC2-backed worker nodes.                            | Supports both Fargate and EC2-backed container instances.                      |
+
+## Similarities
+
+- **Container Management** Both EKS and ECS are designed to run and manage containers at scale. They enable deployment, scaling, and management of containerised applications.
+
+- **Support for AWS Compute Options** Both support EC2 instances (traditional VM-backed workloads) and AWS Fargate (serverless compute for containers).
+
+- **Service Integration** Both integrate well with other AWS services like IAM, CloudWatch, Secrets Manager, VPC, Load Balancers, and Auto Scaling.
+
+- **Use of Docker** Both support containers built with Docker or any other OCI-compliant container runtime.
+
+- **High Availability** Both offer managed, high-availability control planes with integrations to multi-AZ for resiliency.
+
+## Key Differences
+
+| Feature                | EKS                                                                                           | ECS                                                          |
+| ---------------------- | --------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| Orchestration Platform | Uses Kubernetes (an open-source standard).                                                    | Proprietary to AWS, tightly integrated with AWS services.    |
+| Complexity             | Requires Kubernetes expertise and management.                                                 | Simpler to use, no Kubernetes knowledge needed.              |
+| Customizability        | Highly customizable (e.g., custom schedulers, custom networking).                             | Less customisable; AWS manages the orchestration.            |
+| Ecosystem              | Access to the Kubernetes ecosystem and community (e.g., Helm, Istio).                         | Limited to AWS-native ecosystem.                             |
+| Networking             | Advanced networking features via Kubernetes, including CNI plugins and custom ingress.        | Simpler networking options managed directly by AWS.          |
+| Portability            | Vendor-neutral (Kubernetes can run on any platform).                                          | Vendor lock-in (AWS-only service).                           |
+| Use Case               | Best for workloads requiring Kubernetes-specific features or multi-cloud/hybrid cloud setups. | Best for AWS-only deployments or teams that want simplicity. |
+| Pricing                | Additional cost for EKS control plane ($0.10/ hour).                                          | No extra cost for ECS (you pay for the resources used).      |
+| Scaling                | Kubernetes-native scaling (Horizontal Pod Autoscaler).                                        | Simplified ECS-native auto-scaling or Fargate scaling.       |
+| Community              | Kubernetes has a large, active open-source community.                                         | AWS maintains ECS; smaller user base compared to Kubernetes. |
+
+## When to Use AWS EKS
+
+- **Use Cases:**
+    - You need Kubernetes-specific features like custom schedulers, CRDs (Custom Resource Definitions), or advanced networking.
+    - You are running Kubernetes in a multi-cloud or hybrid environment and want to use a consistent platform across clouds.
+    - Your team already has expertise in Kubernetes and wants access to the broader Kubernetes ecosystem (e.g., Helm charts, Istio, etc.).
+    - You have complex workloads that benefit from Kubernetes features like namespaces, custom controllers, and fine-grained resource management.
+
+- **Pros:**
+    - Kubernetes is an industry standard, making workloads portable.
+    - Access to a large ecosystem of Kubernetes tools.
+    - Ideal for hybrid or multi-cloud architectures.
+
+- **Cons:**
+    - Higher operational complexity (you need to manage Kubernetes concepts like Pods, Services, Deployments, etc.).
+    - Additional cost for the EKS control plane.
+
+## When to Use AWS ECS
+
+- **Use Cases:**
+    - You want a simple, tightly integrated AWS-native solution for container orchestration.
+    - You are running workloads exclusively on AWS and do not need Kubernetes-specific features.
+    - You have a team without Kubernetes experience and need a straightforward container orchestration platform.
+    - You prefer a managed solution with minimal operational overhead.
+
+- **Pros:**
+    - Simple setup and operation.
+    - No additional cost for the control plane.
+    - Seamless integration with other AWS services.
+
+- **Cons:**
+    - Vendor lock-in (ECS is AWS-only).
+    - Limited flexibility and ecosystem compared to Kubernetes.
