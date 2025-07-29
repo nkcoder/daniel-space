@@ -1,0 +1,58 @@
+---
+title: Disaster recovery and migrations
+description: Learn about Disaster recovery and migrations in AWS
+---
+
+# Disaster recovery and migrations
+
+## RPO and RTO
+- RPO: Recovery Point Objective
+  - the maximum acceptable gap between the data in the disaster recovery site and the latest data stored in the application when the disaster strikes
+  - between the disaster and RPO is the data loss
+  - for example: backup every hour
+- RTO: Recovery Time Objective
+  - the maximum acceptable delay between the interruption of the application and the restoration of the service
+  - this objective determines the acceptable time window for an application to be unavailable
+  - between the disaster and RTO is the downtime
+
+## Disaster Recovery Strategies
+- backup and restore: 
+  - high RPO and high RTO
+- pilot light: 
+  - a small version of the app (critical core) is always running in the cloud
+  - very similar to backup and restore, but faster
+  - lower RPO and lower RTO
+- warm standby
+  - full system is up and running, but at minimal size
+  - upon disaster, scale to production load
+  - low RPO and low RTO
+- multi size / hot site approach
+  - full production scale is running on AWS and on premise
+  - very low RTO, but also very expensive
+
+## Disaster Recovery tips
+- backup
+  - EBS snapshots, RDS automated backups/snapshots
+  - regular pushes to S3 / S3 IA / Glacier, lifecycle policy, cross region replication
+  - from on-premise: snowball, storage gateway
+- replication
+  - RDS replication (cross region), AWS Aurora + global database
+  - database migration from on-premise to RDS
+  - storage gateway
+- high availability
+  - route 53: migrate DNS over from region to region
+  - RDS/ElastiCache: multi-AZ
+  - site-to-site VPN as a recovery from Direct Connect
+- automation
+  - CloudFormation/Elastic Beanstalk to re-create a whole new environment
+  - recover/reboot EC2 instances with CloudWatch if alarms fail
+
+## Data Migration Service
+
+- on-premise => AWS, AWS => on-premise, AWS => AWS
+- CDC: Change Data Capture
+- need to create an EC2 instance to perform the replication tasks
+    - serverless replication: supports only a limited number of source and target endpoint engine type
+- SCT: Schema Conversion Tool
+    - used to convert database schema from one engine to another
+

@@ -1,0 +1,33 @@
+---
+title: AWS Event Bridge
+description: Learn about AWS Event Bridge in AWS
+---
+
+# AWS EventBridge
+
+- A serverless service that uses events to connect application components together, making it easier for developers to build scalable event-driven applications.
+
+## Event buses
+
+- Receive events from a variety of sources and match them to rules in your account. 
+- Different types of event buses receive events from different sources, including AWS services in your account and other accounts, custom applications and services, and partner applications and services.
+- Enabling event discovery on an event bus will generate EventBridge Schemas for events on that bus.
+
+## Rules
+
+- A rule watches for specific types of events. 
+- When a matching event occurs, the event is routed to the targets associated with the rule. 
+- A rule can be associated with one or more targets.
+- Event pattern:
+    - Event source: 
+        - AWS services: S3, API Gateway, Auto Scaling, CloudTrail, CloudWatch, CloudFormation, CloudFront, DynamoDB, ECR, ECS, Route53, SQS, SNS, SES etc.
+        - EventBridge partners: Adobe, Auth0, Buildkite, PagerDuty, Zendesk etc.
+    - Target:
+        - API Gateway, ECS task, CodePipeline, SQS, SNS, Lambda, Batch etc.
+
+## Scheduler
+
+- A serverless scheduler that allows you to create, run, and manage tasks from one central, managed service. 
+- Highly scalable, EventBridge Scheduler allows you to schedule millions of tasks that can invoke any AWS service as a target.
+- You can define one-time schedule, or recurring schedule
+- Target: SNS, SQS, ECS, CodePipeline, API Gateway, EC2, ELB, Batch, Backup, CloudFront, CloudFormation, DynamoDB, etc.

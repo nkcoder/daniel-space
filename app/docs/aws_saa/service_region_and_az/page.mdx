@@ -1,0 +1,30 @@
+---
+title: 'AWS infra: Region and AZ'
+description: 'Learn about AWS infra: Region and AZ in AWS'
+---
+
+## Region
+
+Region is a physical location around the world where we cluster data centers.
+
+We call each group of logical data centers an Availability Zone. Each AWS Region consists of a minimum of three, isolated, and physically separate AZs within a geographic area.
+
+## Availability Zone
+
+An Availability Zone (AZ) is one or more discrete data centers with redundant power, networking, and connectivity in an AWS Region.
+
+All AZs in an AWS Region are interconnected with high-bandwidth, low-latency networking, over fully redundant, dedicated metro fiber providing high-throughput, low-latency networking between AZs. All traffic between AZs is encrypted.
+
+AZs are physically separated by a meaningful distance, many kilometers, from any other AZ, although all are within 100 km (60 miles) of each other.
+
+- Australia (Sydney) Region: Availability Zones: 3
+- US East (Northern Virginia) Region: Availability Zones: 6
+- US West (Oregon) Region: Availability Zones: 4
+- Europe (Ireland) Region: Availability Zones: 3
+
+## How to choose an AWS Region
+
+- **Compliance** with data governance and legal requirements: data never leaves a Region without your explicit permission
+- **Proximity** to customers: reduced latency
+- **Available services** within a Region: new services and new features aren't available in every Region
+- **Pricing**: the pricing varies Region to Region and is transparent in the service pricing page

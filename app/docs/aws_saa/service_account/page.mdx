@@ -1,0 +1,47 @@
+---
+title: AWS accounts
+description: Learn about AWS accounts in AWS
+---
+
+## Billing
+
+### AWS Budget Setup
+
+- Billing and Cost Management
+  - Budgets: Zero spend budget, Monthly cost budget
+
+### Cost Allocation Tags
+
+- a tag is a label that you or AWS assigns to an AWS resource
+- you can use tags to organize your resources, for example, you can tag AWS resources by department
+- then you can activate tags as cost allocation tags, AWS uses the cost allocation tags to organize your resource costs on your cost allocation report, to make it easier for you to categorize and track your AWS costs. 
+
+## Account
+
+### AWS organization/multi-accounts
+
+- **Resource Access Manager (RAM)**: is a service that enables you to easily and securely share AWS resources with any AWS account or within your AWS organization.
+
+- **AWS Organization** is an account management service that lets you consolidate multiple accounts into an organization
+
+- **AWS Control Tower**: 
+    - It provides a single location to easily set up your new well-architected multi-account environment and govern your AWS workloads with rules for security, operations, and internal compliance.
+    - Automated landing zone: automate the setup of a well-architected multi-account environment and customize the environment based on best practices
+    - Controls for governance: Ensure that your provisioned resources always conform to your policies
+    - Best practice blueprints: automate the setup of multiple AWS services and features by using best practice blueprints
+    - Comprehensive insights: Fine-tune your security and compliance policies using findings and insights from AWS Security Hub.
+
+- **AWS Service Control Policies (SCPs)**: is a type of organization policy to manage permissions in your organization
+    - offers central control over the maximum available permissions for the IAM users and roles in your organization
+    - helps you to ensure your accounts stay within your organization's access control guidelines
+    - it does not grant permissions to the IAM users and roles, no permissions are granted by SCP; it defines a guardrail or sets limits on the actions that the account's administrator can delegate to the IAM users and roles in the affected accounts.
+    - it does not affect users or roles in the ***management*** account, it only affects the member accounts in your organization
+
+## Service quotas
+
+- Your AWS account has default quotas, formerly referred to as limits, for each AWS service
+- Unless otherwise noted, each quota is Region-specific; you can request increase for some quotas, but not all quotas can be increased
+
+- EC2 On-Demand instance limits:
+    - transitioned from the instance count-based limits to the new vCPU-based limits
+    - the total number of vCPUs that are assigned to the running On-Demand instances in your AWS account, for example, small/medium instance is 1vCPUs, large instance is 2vCPUs etc.

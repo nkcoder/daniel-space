@@ -1,0 +1,51 @@
+---
+title: AWS SQS
+description: Learn about AWS SQS in AWS
+---
+
+# AWS SQS
+
+## Long polling vs short polling
+
+- Long polling
+    - doesn’t return a response until a message arrives in the message queue, or the long poll times out.
+    - helps reduce the cost by eliminating the number of empty responses and false empty responses
+
+- Short polling
+      - returns immediately even if the message queue being polled is empty
+
+**Receive message wait time**: 
+  - the maximum amount of time that polling will wait for messages to become available to receive. 
+  - the range is 0 to 20 seconds
+  - if it's 0, the requests use short polling
+
+## Visibility timeout
+
+- It is a period of time SQS prevents other consumers from receiving and processing the message
+- The default is 30 seconds, the range is 0 seconds to 12 hours
+- Typically you should set the visibility timeout to the maximum time that it takes your application to process and delete a message from the queue
+
+## Message retention period
+
+- The amount of time that SQS retains a message that does not get deleted
+- The default is 4 days, the range is 60 seconds to 14 days
+- The expiration of a message is always based on its original enqueue timestamp. When a message is moved to a dead-letter queue, the enqueue timestamp remains unchanged. So the retention period of the dead-letter queue should be longer than that of the original queue
+
+## Standard queue and FIFO queue
+
+- Standard queue:
+    - Unlimited Throughput: supports a nearly unlimited number of transactions per second (TPS) per API action.
+    - At-Least-Once Delivery: a message is delivered at least once. Occasionally more than one copy of a message is delivered.
+    - Best Effort Ordering: Occasionally, messages might be delivered in an order different from which they were sent.
+- FIFO queue:
+    - Hight Throughput: by default ,FIFO queues support up to 3000 messages per second (TPS), per API action through batching
+    - Exactly-Once Processing: a message is delivered once and remains available until a consume processes and deletes it.
+    - First-In-First-Out Delivery: the order in which messages are sent and received is strictly preserved.
+
+- Duplicate messages in Standard queue:
+    - It is possible that a message is delivered more than once in a Standard queue
+    - If the consumer (for example, an EC2 instance) processed the message but failed to delete the message, then the message will be processed twice by another consume after the visibility timeout.
+    - To avoid duplicate messages:
+        - It's better to design your applications (consumers) to idempotent (they should not be affected adversely when processing the same message more than once)
+        - Replace the Standard queue with a FIFO queue
+        - Use AWS Step Functions to replace the Standard queue

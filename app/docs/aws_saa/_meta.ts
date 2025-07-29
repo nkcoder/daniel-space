@@ -23,6 +23,26 @@ const meta: MetaRecord = {
   vs_s3_transfer_acceleration_direct_connect: "VS - S3 Transfer Acceleration vs Direct Connect",
   vs_storage_gateway_datasync: "VS - Storage Gateway vs DataSync",
   vs_swf_step_functions: "VS - SWF vs Step Functions",
+  // New service directories
+  service_account: "Service - Account",
+  service_acm: "Service - ACM",
+  service_api_gateway: "Service - API Gateway",
+  service_aws_directory_service: "Service - Directory Service",
+  service_aws_health_dashboard: "Service - Health Dashboard",
+  service_aws_sns: "Service - SNS",
+  service_aws_sqs: "Service - SQS",
+  service_aws_storage_gateway: "Service - Storage Gateway",
+  service_cloudformation: "Service - CloudFormation",
+  service_cloudfront: "Service - CloudFront",
+  service_cloudwatch: "Service - CloudWatch",
+  service_data_sync: "Service - DataSync",
+  service_disaster_recovery: "Service - Disaster Recovery",
+  service_event_bridge: "Service - EventBridge",
+  service_iam: "Service - IAM",
+  service_kinesis_streaming_platform: "Service - Kinesis",
+  service_kms: "Service - KMS",
+  service_other_services: "Service - Other Services",
+  service_region_and_az: "Service - Region & AZ",
 };
 
 export default meta;

@@ -1,0 +1,35 @@
+---
+title: AWS CloudFormation
+description: Learn about AWS CloudFormation in AWS
+---
+
+# AWS CloudFormation
+
+## Resource attributes
+
+### `CreationPolicy` attribute
+
+Associate the `CreationPolicy` attribute with a resource to prevent its status from reaching create complete until AWS CloudFormation receives a specified number of success signals or the timeout period is exceeded. To signal a resource, you can use the **_cfn-signal_** helper script or _SignalResource_ API.
+
+The creation policy is invoked only when CloudFormation creates the associated resource. Only the following resources support creation policies:
+- AppStream::Fleet
+- AutoScaling::AutoScalingGroup
+- EC2::Instance
+- CloudFormation::WaitCondition
+
+Use the `CreationPolicy` attribute when you want to wait on resource configuration actions before stack creation proceeds. For example, if you install and configure software applications on an EC2 instance, you might want those applications to be running before proceeding.
+
+### `DeletionPolicy` attribute
+- The `DeletionPolicy` attribute allows you to preserve, and in some cases, backup a resource when its stack is deleted.
+- If a resource has no `DeletionPolicy`, AWS CloudFormation deletes the resource by default.
+- Options
+  - Delete: deletes the resource and all its content if applicable during stack deletion
+  - Retain: keep the resource and its content when the stack is deleted
+  - RetainExceptOnCreate: behaves like Retain for stack operations, except for the stack operation that initially created the resource
+    - if the stack operation that created the resource is rolled back, CloudFormation deletes the resource
+    - for all other stack operations, such as stack deletion, CloudFormation retains the source and its contents
+  - Snapshot: for resources that support snapshots, CloudFormation creates a snapshot before deleting it
+
+### `DependsOn` attribute
+- When you add a DependsOn attribute to a resource, that resource is created only after the creation of the resource specified in the DependsOn attribute.
+

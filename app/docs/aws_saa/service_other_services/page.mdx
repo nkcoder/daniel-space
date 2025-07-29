@@ -1,0 +1,231 @@
+---
+title: AWS other services
+description: Learn about AWS uncommon services in AWS
+---
+
+# Other Services
+
+## SES
+
+- fully managed service to send emails securely, globally and at scale
+- allows inbound/outbound emails
+- use cases: transactional, marketing and bulk email communications
+
+## Pinpoint
+
+- scalable 2-way (inbound/outbound) marketing communication service
+- supports email, sms, push, voice and in-app messaging
+- use cases: run campaigns by sending marketing, bulk, transaction SMS messages
+- SNS/SES vs Pinpoint
+  - SNS/SES: need to manage each message's audience, content and delivery schedule
+  - Pinpoint: create message templates, delivery schedule, segments/groups and full campaigns
+
+## SSM Session Manager
+
+- allows a secure shell on EC2 and on-premise servers
+- no SSH access, no bastion hosts, no SSH keys needed
+- no port 22 needed (no security group is required)
+- for an existing EC2 instance, or starting a new EC2 instance
+  - assign SSM permissions to the instance role (for example, the `AmazonEC2RoleforSSM` policy)
+  - in the EC2 instance `connect`, you can use Session Manager
+  - or in Systems Manager => Fleet Manager: you can see the EC2 instance
+
+## AWS Batch
+
+- a fully managed batch computing service that plans, schedules, and runs your batch computing workloads at any scale
+- use Docker image, runs on ECS, EKS, Fargate
+- AWS Batch vs Lambda
+  - Lambda:
+    - time limit
+    - limited runtime
+    - limited temporary disk space®®®
+    - serverless
+  - Batch
+    - no time limit
+    - any runtime as long as it's packaged as a docker image
+    - rely on EBS/instance store for disk space
+    - relies on EC2 (ECS)
+
+## Amazon Rekognition
+
+Amazon Rekognition is a cloud-based image and video analysis service that makes it easy to add advanced computer vision capabilities to your applications.
+- it can search, verify, and organize millions of images and videos
+- you can proactively detect inappropriate, unwanted or offensive content
+- you can define an interface **VPC endpoint** for Amazon Pekognition, which communicates with resources on your VPC without going through the public internet
+- related services:
+  - Amazon SageMaker: it is a fully managed machine learning service, you can prepare, build, train, and deploy high-quality ML models efficiently.
+
+## Amazon SWF (Simple Workflow Service)
+
+- provides a way to build, run and scale background jobs that have parallel or sequential steps
+- you can coordinate work across distributed components, tracking the state of tasks (which can run either on AWS, or on-premises)
+
+- Services that can be used to create a decoupled architecture for applications that use both AWS and on-premise resources?
+    - Amazon SWF (Simple Workflow)
+    - SQS/SNS
+    - ELB (in the target group, the `IP Address` target type supports load balancing to VPC and on-premises resources)
+
+## Amazon EMR
+
+- EMR: Elastic Map Reduce
+- a managed cluster platform that simplifies running big data frameworks, such as Apache Hadoop and Apache Spark on AWS to process and analyze vast amount of data
+- It securely and reliably handles a broad set of big data use cases, including log analysis, web indexing, data transformations (ETL), machine learning, financial analysis, scientific simulation and bioinformatics. 
+- ![EMR Workflow](./EMR-workflow.png)
+
+## Amazon Redshift
+
+- It is the most widely used cloud data warehouse
+- a fast, simple and cost-effective way to analyze the data using standard SQL and existing Business Intelligence (BI) tools
+- allows you to run complex analytic queries against terabytes to petabytes of structured and semi-structured data, using sophisticated query optimization, columnar storage on high-performance storage and massively parallel query execution.
+
+- Redshift Spectrum: Using Amazon Redshift Spectrum, you can efficiently query and retrieve structured and semistructured data from files in Amazon **S3** without having to load the data into Amazon Redshift tables.
+
+## Storage Gateway
+
+AWS Storage Gateway gives your applications on-premises and in-cloud access to virtually unlimited cloud storage. You can deploy it as a Virtual Machine (VM) within VMware, Hyper-V or as an EC2 instance within VPC.
+
+Storage Gateway types:
+- File Gateway
+- Amazon FSx File Gateway
+- Tape Gateway
+- Volume Gateway
+
+For example, you can use a Tape Gateway to replace physical tapes on-premises with virtual tapes in AWS without changing existing backup workflows
+
+## AWS Glue
+
+- A serverless data integration service that makes it easy for analytics users to discover, prepare, move, and integrate data from multiple sources.
+- With AWS Glue, you can discover and connect to more than 70 diverse data sources and manage your data in a centralized data catalog.
+- You can visually create, run, and monitor extract, transform, and load (ETL) pipelines to load data into your data lakes
+- You can immediately search and query cataloged data using Amazon Athena, Amazon EMR, and Amazon Redshift Spectrum.
+- Features:
+    - Discover and organize data
+    - Transform, prepare, and clean data for analysis
+    - Build and monitor data pipelines
+
+- **Job bookmarks**:
+    - AWS Glue tracks data that has already been processed during a previous run of an ETL job by persisting state information from the job run. This persisted state information is called a job bookmark.
+    - Job bookmarks help AWS Glue maintain state information and prevent the reprocessing of old data. With job bookmarks, you can process new data when rerunning on a scheduled interval.
+    - A job bookmark is composed of the states for various elements of jobs, such as sources, transformations, and targets. For example, your ETL job might read new partitions in an Amazon S3 file. AWS Glue tracks which partitions the job has processed successfully to prevent duplicate processing and duplicate data in the job's target data store.
+
+## Amazon Transcribe
+
+Amazon Transcribe is an automatic speech recognition service that uses machine learning models to convert audio to text(audio => text). 
+
+You can use Amazon Transcribe as a standalone transcription service or to add speech-to-text capabilities to any application.
+
+You can transcribe media in real time (streaming) or you can transcribe media files located in an Amazon S3 bucket (batch).
+
+## Amazon Translate 
+
+Amazon Translate is a neural machine translation service for translating text to and from English across a breadth of supported languages (language translation).
+
+**Use cases**
+- Enable multilingual user experiences in your applications by integrating Amazon Translate
+- Process and manage your company's incoming data (such as social media and news feeds in many languages)
+- Enable language-independent processing by integrating Amazon Translate with other AWS services, for example:
+  - extract from unstructured text such as social media streams with Amazon Comprehend
+  - make subtitles and live captioning available with Amazon Transcribe
+  - speak translated content with Amazon Polly
+
+## Amazon Comprehend
+
+Amazon Comprehend uses natural language processing (NLP) to extract insights about the content of documents (document => topics). 
+
+**Examples**:
+- Find documents about a subject
+- Find out how customers feel about your products
+- Discover what matters to your customers
+
+## Amazon Polly
+
+Amazon Polly is a cloud service that converts text into lifelike speech (text => speech). 
+
+**Use cases**:
+- mobile applications such as newsreaders, games, eLearning platforms
+- accessibility applications for visually impaired people, and the rapidly growing segment of Internet of Things (IoT)
+
+## Amazon Fraud Detector
+
+Amazon Fraud Detector is a fully managed service that makes it easy to identify potentially **fraudulent online activities** such as online payment fraud and creation of fake accounts.
+
+## Amazon Lex
+
+Amazon Lex is an AWS service for building conversational interfaces into applications using voice and text.
+
+With Amazon Lex, the same deep learning engine that powers Amazon Alexa is now available to any developer, enabling you to build sophisticated, natural language chatbots into your new and existing applications.
+
+## Amazon Kendra
+
+Amazon Kendra is an **intelligent search service** that uses natural language processing and advanced machine learning algorithms to return specific answers to search questions from your data.
+
+Unlike traditional keyword-based search, Amazon Kendra uses its semantic and contextual understanding capabilities to decide whether a document is relevant to a search query. It returns specific answers to questions, giving users an experience that's close to interacting with a human expert.
+
+## Amazon Detective
+
+Amazon Detective makes it easy to analyze, investigate, and quickly identify the root cause of security findings or suspicious activities. 
+
+Detective automatically collects log data from your AWS resources and uses machine learning, statistical analysis, and graph theory to help you visualize and conduct faster and more efficient security investigations.
+
+## AWS Artifact
+
+- provides on-demand downloads of AWS security and compliance documents, for example:
+    - reports on compliance with ISO standards 
+    - Payment Card Industry (PCI) Security standards reports
+    - System and Organisation Controls (SOC) reports
+- you can download security and compliance documents for independent software vendors who sell their products on AWS marketplace
+- you can review, accept, and track the status of your agreements with AWS for your account and organisation
+
+## Amazon Macie
+
+- It's a data security service that discovers sensitive data by using machine learning and pattern matching
+- It automates discovery and report of sensitive data (for example, PII data) to provide you with a better understanding of the data that your organisation stores in **Amazon S3**
+- To detect sensitive data, you can use built-in criteria and techniques that Macie provides, custom criteria that you define, or a combination of the two.
+
+## Amazon FSx for Lustre
+
+- A fully managed, high-performance file system optimised for workloads that require fast storage and rapid data processing
+- 
+- Storage options:
+    - SSD storage options – For low-latency, IOPS-intensive workloads that typically have small, random file operations, choose one of the SSD storage options.
+    - HDD storage options – For throughput-intensive workloads that typically have large, sequential file operations, choose one of the HDD storage options.
+
+- **Key features**:
+    - High performance and low latency
+    - Scalability
+    - Seamless integration with Amazon S3
+    - Compatibility with the open source Lustre file system
+
+- **Use cases**:
+    - High performance computing (HPC)
+    - Machine learning and artificial intelligence
+    - Video processing
+    - Financial modeling
+
+## Amazon FSx for Windows File Server
+
+- It provides fully managed Microsoft Windows file servers, backed by a fully native Windows file system
+- It has the features, performance, and compatibility to easily lift and shift enterprise applications to the AWS Cloud
+
+## AWS Application Migration Service
+
+- It is a highly automated lift-and-shift (rehost) solution that simplifies, expedites, and reduces the cost of migrating applications to AWS.
+- It allows companies to lift-and-shift a large number of physical, virtual, or cloud servers without compatibility issues, performance disruption, or long cutover windows.
+- The process:
+    - Install AWS Replication Agent on your source servers. No reboot required.
+    - Application Migration Service automatically replicates entire servers, including operating system, applications, data, and configurations.
+    - Use the Application Migration Service console to perform non-disruptive tests in AWS prior to initiating a cutover.
+    - When you are ready, use the Application Migration Service console to execute a successful cutover. Your servers are launched on AWS within minutes.
+- Use case:
+    - Data center to cloud migration: move your virtual and physical servers to AWS
+    - Cross-cloud migration: migrate workloads running on another public or private cloud to AWS
+    - Cross-region migration: migration between AWS accounts, availability zones, or regions
+
+## AWS Migration Hub
+
+- AWS Migration Hub (Migration Hub) provides a single place to discover your existing servers, plan migrations, and track the status of each application migration.
+- You can visualize the connections and the status of the servers and databases that make up each of the applications you are migrating, regardless of which migration tool you are using.
+- Migration Hub gives you the choice to start migrating right away and group servers while migration is underway, or to first discover servers and then group them into applications. Either way, you can migrate each server in an application and track progress from each tool in the AWS Migration Hub.
+- It supports migration status updates from:
+    - Application Migration Service
+    - Database Migration Service
