@@ -1,0 +1,438 @@
+
+# Java Documentation
+
+This section contains comprehensive notes and guides on Java programming concepts, best practices, and language features.
+
+## Table of Contents
+
+- [Basic Concepts](#basic-concepts)
+- [Object-Oriented Programming](#object-oriented-programming)
+- [Lambda Expressions](#lambda-expressions)
+- [Effective Final Variables](#effective-final-variables)
+- [Collections Framework](#collections-framework)
+- [Exception Handling](#exception-handling)
+- [Best Practices](#best-practices)
+
+## Basic Concepts
+
+### Variables and Data Types
+
+Java is a statically typed language, meaning you must declare the type of a variable before using it.
+
+```java
+// Primitive data types
+int number = 42;
+double price = 99.99;
+boolean isActive = true;
+char grade = 'A';
+
+// Reference types
+String name = "John Doe";
+List<String> items = new ArrayList<>();
+```
+
+### Control Structures
+
+#### Conditional Statements
+
+```java
+if (score >= 90) {
+    grade = 'A';
+} else if (score >= 80) {
+    grade = 'B';
+} else {
+    grade = 'C';
+}
+
+// Switch statement (modern syntax)
+String dayType = switch (dayOfWeek) {
+    case MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY -> "Weekday";
+    case SATURDAY, SUNDAY -> "Weekend";
+};
+```
+
+#### Loops
+
+```java
+// For loop
+for (int i = 0; i < 10; i++) {
+    System.out.println(i);
+}
+
+// Enhanced for loop
+List<String> names = Arrays.asList("Alice", "Bob", "Charlie");
+for (String name : names) {
+    System.out.println(name);
+}
+
+// While loop
+int count = 0;
+while (count < 5) {
+    System.out.println("Count: " + count);
+    count++;
+}
+```
+
+## Object-Oriented Programming
+
+### Classes and Objects
+
+```java
+public class Person {
+    private String name;
+    private int age;
+    
+    // Constructor
+    public Person(String name, int age) {
+        this.name = name;
+        this.age = age;
+    }
+    
+    // Getter methods
+    public String getName() {
+        return name;
+    }
+    
+    public int getAge() {
+        return age;
+    }
+    
+    // Setter methods
+    public void setName(String name) {
+        this.name = name;
+    }
+    
+    public void setAge(int age) {
+        if (age >= 0) {
+            this.age = age;
+        }
+    }
+    
+    @Override
+    public String toString() {
+        return "Person{name='" + name + "', age=" + age + "}";
+    }
+}
+```
+
+### Inheritance
+
+```java
+public class Employee extends Person {
+    private String jobTitle;
+    private double salary;
+    
+    public Employee(String name, int age, String jobTitle, double salary) {
+        super(name, age); // Call parent constructor
+        this.jobTitle = jobTitle;
+        this.salary = salary;
+    }
+    
+    public String getJobTitle() {
+        return jobTitle;
+    }
+    
+    public double getSalary() {
+        return salary;
+    }
+    
+    @Override
+    public String toString() {
+        return super.toString() + ", jobTitle='" + jobTitle + "', salary=" + salary;
+    }
+}
+```
+
+### Interfaces
+
+```java
+public interface Drawable {
+    void draw();
+    
+    // Default method (Java 8+)
+    default void print() {
+        System.out.println("Printing...");
+    }
+    
+    // Static method (Java 8+)
+    static void info() {
+        System.out.println("This is a drawable interface");
+    }
+}
+
+public class Circle implements Drawable {
+    private double radius;
+    
+    public Circle(double radius) {
+        this.radius = radius;
+    }
+    
+    @Override
+    public void draw() {
+        System.out.println("Drawing a circle with radius: " + radius);
+    }
+}
+```
+
+## Lambda Expressions
+
+Lambda expressions provide a concise way to represent anonymous functions. They were introduced in Java 8.
+
+### Syntax
+
+```java
+// Basic syntax: (parameters) -> expression
+// or (parameters) -> { statements; }
+
+// Examples
+Runnable task = () -> System.out.println("Hello, World!");
+
+Function<String, Integer> stringLength = s -> s.length();
+
+BiFunction<Integer, Integer, Integer> add = (a, b) -> a + b;
+
+Predicate<String> isEmpty = s -> s.isEmpty();
+```
+
+### Functional Interfaces
+
+```java
+// Common functional interfaces
+import java.util.function.*;
+
+// Predicate<T> - takes T, returns boolean
+Predicate<Integer> isEven = n -> n % 2 == 0;
+
+// Function<T, R> - takes T, returns R
+Function<String, String> toUpperCase = s -> s.toUpperCase();
+
+// Consumer<T> - takes T, returns void
+Consumer<String> printer = s -> System.out.println(s);
+
+// Supplier<T> - takes nothing, returns T
+Supplier<Double> randomValue = () -> Math.random();
+
+// BiFunction<T, U, R> - takes T and U, returns R
+BiFunction<String, String, String> concat = (a, b) -> a + b;
+```
+
+### Stream API with Lambdas
+
+```java
+List<String> names = Arrays.asList("Alice", "Bob", "Charlie", "David");
+
+// Filter and transform
+List<String> result = names.stream()
+    .filter(name -> name.length() > 3)
+    .map(String::toUpperCase)
+    .sorted()
+    .collect(Collectors.toList());
+
+// Reduce operations
+int totalLength = names.stream()
+    .mapToInt(String::length)
+    .sum();
+
+Optional<String> longest = names.stream()
+    .max(Comparator.comparing(String::length));
+```
+
+## Effective Final Variables
+
+Variables that are effectively final can be used in lambda expressions and inner classes without being explicitly declared as `final`.
+
+### What is Effectively Final?
+
+A variable is effectively final if:
+- It's not declared as `final`
+- Its value is never changed after initialization
+
+```java
+public class EffectiveFinalExample {
+    public void demonstrateEffectiveFinal() {
+        String message = "Hello"; // Effectively final
+        int count = 0; // NOT effectively final (modified later)
+        
+        List<String> items = Arrays.asList("a", "b", "c");
+        
+        // This works - message is effectively final
+        items.forEach(item -> System.out.println(message + " " + item));
+        
+        count++; // This makes count NOT effectively final
+        
+        // This would cause compilation error:
+        // items.forEach(item -> System.out.println(count + " " + item));
+    }
+    
+    public void workingExample() {
+        final String prefix = "Item: "; // Explicitly final
+        String suffix = " (processed)"; // Effectively final
+        
+        List<String> items = Arrays.asList("apple", "banana", "cherry");
+        
+        // Both variables can be used in lambda
+        List<String> processed = items.stream()
+            .map(item -> prefix + item + suffix)
+            .collect(Collectors.toList());
+    }
+}
+```
+
+### Best Practices
+
+1. **Prefer effectively final over explicit final** when the intent is clear
+2. **Use method parameters** which are automatically effectively final
+3. **Extract variables** if you need to modify them outside lambda scope
+
+```java
+// Good: Method parameter is effectively final
+public void processItems(List<String> items, String prefix) {
+    items.forEach(item -> System.out.println(prefix + item));
+}
+
+// Good: Extract processing logic
+public void processWithCounter(List<String> items) {
+    AtomicInteger counter = new AtomicInteger(0);
+    items.forEach(item -> {
+        int currentCount = counter.incrementAndGet();
+        System.out.println(currentCount + ": " + item);
+    });
+}
+```
+
+## Collections Framework
+
+### Common Collections
+
+```java
+// List - ordered, allows duplicates
+List<String> arrayList = new ArrayList<>();
+List<String> linkedList = new LinkedList<>();
+
+// Set - no duplicates
+Set<String> hashSet = new HashSet<>();
+Set<String> treeSet = new TreeSet<>(); // sorted
+
+// Map - key-value pairs
+Map<String, Integer> hashMap = new HashMap<>();
+Map<String, Integer> treeMap = new TreeMap<>(); // sorted by keys
+```
+
+### Collection Operations
+
+```java
+List<Integer> numbers = Arrays.asList(1, 2, 3, 4, 5);
+
+// Stream operations
+List<Integer> evenSquares = numbers.stream()
+    .filter(n -> n % 2 == 0)
+    .map(n -> n * n)
+    .collect(Collectors.toList());
+
+// Grouping
+Map<Boolean, List<Integer>> grouped = numbers.stream()
+    .collect(Collectors.groupingBy(n -> n % 2 == 0));
+```
+
+## Exception Handling
+
+### Try-Catch-Finally
+
+```java
+public void readFile(String filename) {
+    try {
+        Files.readAllLines(Paths.get(filename));
+        System.out.println("File read successfully");
+    } catch (IOException e) {
+        System.err.println("Error reading file: " + e.getMessage());
+    } finally {
+        System.out.println("Cleanup operations");
+    }
+}
+```
+
+### Try-with-Resources
+
+```java
+public void readFileWithResources(String filename) {
+    try (BufferedReader reader = Files.newBufferedReader(Paths.get(filename))) {
+        String line;
+        while ((line = reader.readLine()) != null) {
+            System.out.println(line);
+        }
+    } catch (IOException e) {
+        System.err.println("Error: " + e.getMessage());
+    }
+    // Resources are automatically closed
+}
+```
+
+### Custom Exceptions
+
+```java
+public class InvalidAgeException extends Exception {
+    public InvalidAgeException(String message) {
+        super(message);
+    }
+}
+
+public class Person {
+    private int age;
+    
+    public void setAge(int age) throws InvalidAgeException {
+        if (age < 0 || age > 150) {
+            throw new InvalidAgeException("Age must be between 0 and 150");
+        }
+        this.age = age;
+    }
+}
+```
+
+## Best Practices
+
+### Code Style
+
+1. **Use meaningful variable names**
+   ```java
+   // Bad
+   int d = 30;
+   
+   // Good
+   int daysInMonth = 30;
+   ```
+
+2. **Follow Java naming conventions**
+   - Classes: `PascalCase`
+   - Methods and variables: `camelCase`
+   - Constants: `UPPER_SNAKE_CASE`
+   - Packages: `lowercase.with.dots`
+
+3. **Use Optional for null safety**
+   ```java
+   public Optional<User> findUser(String id) {
+       User user = database.getUser(id);
+       return Optional.ofNullable(user);
+   }
+   
+   // Usage
+   Optional<User> userOpt = findUser("123");
+   userOpt.ifPresent(user -> System.out.println(user.getName()));
+   ```
+
+### Performance Tips
+
+1. **Use StringBuilder for string concatenation in loops**
+2. **Prefer ArrayList over LinkedList for random access**
+3. **Use appropriate collection types based on usage patterns**
+4. **Leverage parallel streams for CPU-intensive operations**
+
+### Security Considerations
+
+1. **Validate input parameters**
+2. **Use try-with-resources for automatic resource management**
+3. **Avoid exposing mutable objects**
+4. **Use defensive copying when necessary**
+
+---
+
+*This documentation is continuously updated. For the latest Java features and best practices, refer to the official Oracle Java documentation.*

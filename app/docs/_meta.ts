@@ -1,10 +1,8 @@
-export default {
-  'introduction': {
-    title: 'Introduction',
-    type: 'page'
-  },
-  'getting-started': {
-    title: 'Getting Started',
-    type: 'page'
-  }
+import { MetaRecord } from "nextra";
+
+const meta: MetaRecord= {
+  index: "Overview",
+  java: "Java"
 }
+
+export default meta;
