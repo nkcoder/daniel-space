@@ -5,13 +5,17 @@ const meta: MetaRecord = {
     title: "About",
     type: "page"
   },
+  project: {
+    title: "Projects",
+    type: "page"
+  },
   docs: {
     title: "Documentation",
     type: "doc",
   },
-  project: {
-    title: "Projects",
-    type: "page"
+  blogs: {
+    title: "Blogs",
+    type: "doc"
   },
 }
 

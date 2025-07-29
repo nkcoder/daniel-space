@@ -186,7 +186,7 @@ We can create an IAM policy that enforces MFA authentication and attach the poli
 ## Identity providers and federation
 
 - If your organization already uses an identity provider software package that supports **SAML 2.0** (Security Assertion Markup Language 2.0), you can create trust between your organization as an identity provider (IdP) and AWS as the service provider. You can then use SAML to provide your users with federated single-sign on (SSO) to the AWS Management Console or federated access to call AWS API operations.
-    ![SAML-based Federation](SAML_based_federation.png)
+    ![SAML-based Federation](./SAML_based_federation.png)
 
 - If your identity store is not compatible with SAML 2.0, then you can build a custom identity broker application to perform a similar function.The broker application authenticates users, requests temporary credentials for users from AWS, and then provides them to the user to access AWS resources.
     ![Identity Broker Federation](./identity_broker_federation.png)
