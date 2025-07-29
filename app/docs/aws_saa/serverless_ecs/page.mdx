@@ -1,0 +1,19 @@
+---
+title: "AWS ECS"
+description: "Overview of AWS ECS and Fargate, including how to run containers without managing servers."
+---
+
+## AWS ECS
+
+Amazon ECS is a fully managed container orchestration service that helps you easily deploy, manage, and scale containerized applications. As a fully managed service, Amazon ECS comes with AWS configuration and operational best practices built-in.
+## AWS Fargate
+
+AWS Fargate is to run containers without having to manage servers or clusters of Amazon EC2 instances. 
+- you no longer have to provision, configure, or scale clusters of virtual machines to run containers.
+- each Fargate task has its own isolation boundary and does not share the underlying kernel, CPU resources, memory resources, or elastic network interface with another task. 
+- your ECS service on AWS Fargate can optionally be configured to use Elastic Load Balancing to distribute traffic evenly across the tasks in your service.
+
+Fargate task ephemeral storage:
+- by default, Amazon ECS tasks that are hosted on Fargate receive a minimum of 20 GiB of ephemeral storage. 
+- the total amount of ephemeral storage can be increased up to a maximum of 200 GiB. You can do this by specifying the `ephemeralStorage` parameter in your task definition.
+- the ephemeral storage is encrypted with an AES-256 encryption algorithm, which uses an AWS owned encryption key
