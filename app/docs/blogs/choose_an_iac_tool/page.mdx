@@ -1,0 +1,112 @@
+---
+title: Choose an IaC tool
+description: How to choose among AWS CDK, Terraform and Plumi
+date: 2025-05-07
+tags: [iac, terraform]
+---
+
+## Context and Problem Statement
+
+> This is an ADR document that I shared within the development team, with updates. Please make the final decision based on your team's circumstances.
+
+We need a standardized approach to managing our infrastructure across multiple environments. Our main criteria include:
+
+• **Language Preference:** Ability to use familiar languages.
+
+• **Multi-Cloud Support:** Flexibility to deploy across different cloud providers.
+
+• **Imperative vs. Declarative:** Balance between imperative programming and declarative configuration.
+
+• **Ecosystem Maturity:** A robust set of modules and community support.
+
+The three tools under review are:
+
+- **AWS CDK:** Provides an imperative approach in familiar programming languages for AWS deployments.
+- **Terraform (and tfcdk):** Terraform offers a mature, declarative model with multi-cloud support. The tfcdk option brings a CDK-like abstraction to Terraform.
+- **Pulumi:** Similar to CDK in that it supports imperative programming languages but offers true multi-cloud capabilities.
+
+## Considered Options
+
+### AWS CDK
+
+**Pros**:
+
+- Uses familiar programming languages (TypeScript, Python, Java, etc.)
+  - Type safety and IDE autocompletion
+  - Testing and debugging
+- Native AWS integration with excellent AWS service coverage
+- ***Automatic rollback by default for failed deployment, especially useful for large and complex deployments*Cons**:
+- AWS-only
+- Steeper learning curve if you're not familiar with AWS CloudFormation, generated CloudFormation templates can be massive
+
+### HashiCorp Terraform
+
+**Pros**:
+
+- Provider-agnostic with support for multiple cloud providers
+- Mature ecosystem with extensive provider support
+- Excellent state management and planning capabilities
+- Support resource import
+
+**Cons**:
+
+- HCL is a domain-specific language (not a general programming language)
+- Limited programming constructs (loops, conditionals are possible but clunky)
+- State management requires careful handling
+- Module system less powerful than true programming language constructs
+- No automatic rollback, needs manual intervention to clean up partial deployments
+- CDK for terraform: may have breaking changes before 1.0 release
+
+### Pulumi
+
+**Pros:**
+
+- Uses familiar programming languages (TypeScript, Python, Java, etc.)
+  - Type safety and IDE autocompletion
+  - Testing and debugging
+- Multi-cloud support like Terraform
+- Strong type checking and IDE support
+- **Support resource import**
+
+**Cons:**
+
+- Newer and less mature than Terraform
+- Smaller community and fewer examples
+- State management complexity similar to Terraform
+- Runtime dependencies on language ecosystems
+- No automatic rollback
+
+### Comparison summary
+
+| **Attribute**                        | **AWS CDK**                                                 | **Terraform**                                          | **Pulumi**                                                                         |
+| ------------------------------------ | ----------------------------------------------------------- | ------------------------------------------------------ | ---------------------------------------------------------------------------------- |
+| **General programming languages**    | ✅ YES (TypeScript, JS, Python, Java, C#)                   | ⚠️ NO (HCL). CDK for TF unstable                       | ✅ YES (TypeScript, JS, Python, Go, Java, C#)                                      |
+| **DSL (Domain-specific language)**   | ❌ NO (uses general languages)                              | ✅ YES (HCL)                                           | ❌ NO (uses general languages)                                                     |
+| **Multi-cloud support**              | ⚠️ LIMITED (Primarily AWS-focused)                          | ✅ EXCELLENT (AWS, Azure, GCP, Kubernetes, SaaS)       | ✅ EXCELLENT (AWS, Azure, GCP, Kubernetes, SaaS)                                   |
+| **AWS integration**                  | ✅ EXCELLENT (Official AWS tool)                            | ✅ EXCELLENT (Well-supported provider)                 | ✅ EXCELLENT (Well-supported provider)                                             |
+| **Learning curve**                   | ⚠️ MEDIUM                                                   | ✅ LOW                                                 | ⚠️ MEDIUM-HIGH                                                                     |
+| **Community & ecosystem**            | ⚠️ GROWING (AWS community primarily)                        | ✅ STRONG, LARGE (Extensive ecosystem & modules)       | ⚠️ GROWING (Active, but smaller)                                                   |
+| **Documentation quality**            | ✅ GOOD (Official AWS docs & examples)                      | ✅ EXCELLENT (Comprehensive docs, tutorials, examples) | ⚠️ GOOD (Improving, fewer examples)                                                |
+| **State management maturity**        | ✅ GOOD (CloudFormation-based, stable)                      | ✅ EXCELLENT (Mature, robust backend options)          | ⚠️ GOOD (Cloud-managed, improving stability)                                       |
+| **Testing & debugging experience**   | ✅ GOOD (Standard dev tooling, more CloudFormation focused) | ⚠️ LIMITED (Complex due to state files and HCL)        | ✅ EXCELLENT (Standard dev tooling, leverages language-native testing tools fully) |
+| **CI/CD and automation support**     | ✅ GOOD (AWS Pipelines, standard CI/CD tools)               | ✅ EXCELLENT (Well-established integrations)           | ✅ GOOD (Integrates easily with common CI/CD tools)                                |
+| **Abstraction and reusability**      | ✅ HIGH (Constructs, easy reusability)                      | ✅ MEDIUM (Modules reusable, less abstraction)         | ✅ HIGH (Packages and classes, easy reusability)                                   |
+| **Declarative or imperative style**  | ⚠️ IMPERATIVE (but generates declarative CloudFormation)    | ✅ DECLARATIVE (Fully declarative)                     | ⚠️ IMPERATIVE (generates declarative outputs)                                      |
+| **Automatic rollback on failure**    | ✅ YES (via CloudFormation built-in rollback)               | ❌ NO (manual intervention required)                   | ❌ NO (manual intervention required)                                               |
+| **Preview (dry-run) capability**     | ✅ YES (cdk diff)                                           | ✅ YES (terraform plan)                                | ✅ YES (pulumi preview)                                                            |
+| **Resource import (existing infra)** | ⚠️ LIMITED (requires manual workaround)                     | ✅ YES (terraform import)                              | ✅ YES (terraform import)                                                          |
+| **Drift Detection**                  | ✅ YES (CloudFormation stack drift detection)               | ✅ YES (needs manual plan/apply)                       | ✅ YES (needs explicit refresh/check)                                              |
+
+## Decision
+
+After review and discussions, we decide to go for Plumi with TypeScript for the following considerations:
+
+- We want to use a familiar programming language (TypeScript is our main language), rather than a DSL (YAML or HCL)
+- It should be cloud agnostic (supports multi cloud provider and on-premises)
+- It should be stable with good documentation and community
+
+## References
+
+- [Terraform docs](https://developer.hashicorp.com/terraform/docs)
+- [Terraform vs. Pulumi IaC](https://www.pulumi.com/docs/iac/concepts/vs/terraform/)
+- [AWS CDK docs](https://docs.aws.amazon.com/cdk/v2/guide/home.html)

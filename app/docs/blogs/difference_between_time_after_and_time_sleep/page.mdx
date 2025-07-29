@@ -1,0 +1,59 @@
+---
+title: 'The difference between `time.After` and `time.Sleep`'
+date: 2025-05-18
+tags: [go]
+---
+
+## What's the difference
+
+What's the difference between:
+
+```go
+import "time"
+<-time.After(10 * time.Second)
+```
+
+```go
+import "time"
+time.Sleep(10 * time.Second)
+```
+
+The difference between `<-time.After(...)` and `time.Sleep(...)` in Go is mainly about how they interact with Go's concurrency model and channels:
+
+**time.Sleep()**
+
+- Blocks the current goroutine for the specified duration.
+- No value is produced, and you cannot select on it.
+- Simple and direct: execution pauses, then resumes after the duration.
+
+```go
+time.Sleep(10 * time.Second)
+// code here runs after 10 seconds
+```
+
+**time.After()**
+- Also blocks the current goroutine until the duration elapses.
+- Returns a channel that receives a value after the duration.
+- Can be used in a `select` statement, allowing you to wait for multiple events (timeouts, other channels, etc.).
+- More flexible for concurrent patterns.
+
+```go
+<-time.After(10 * time.Second)
+// code here runs after 10 seconds
+```
+
+With `select`:
+
+```go
+select {
+case <-time.After(10 * time.Second):
+    fmt.Println("Timeout!")
+case msg := <-someChannel:
+    fmt.Println("Received:", msg)
+}
+```
+
+**Summary**
+- Both block the goroutine if used as above.
+- `<-time.After(...)` is more flexible and idiomatic in concurrent Go code, especially when you need to wait for either a timeout or another event.
+- `time.Sleep(...)` is simpler for just pausing execution.

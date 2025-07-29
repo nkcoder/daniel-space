@@ -1,0 +1,132 @@
+---
+title: Migrate from NPM to PNPM
+description: The process to migrate a project from NPM to PNPM.
+date: 2025-02-06
+tags: [nodejs]
+---
+
+## The benefits of pnpm over npm
+
+### Performance
+
+-	Faster installs: pnpm uses a content-addressable store and hard links files from the global store to node_modules, which avoids redundant downloads and file copying.
+-	Parallelization: It aggressively parallelizes operations more than npm, especially for network I/O and linking.
+
+
+### Disk Space Efficiency
+
+- Content-addressable store: Dependencies are stored in a single location on disk (~/.pnpm-store) and symlinked into projects. This avoids duplication across projects, saving significant disk space—especially in monorepos.
+- No duplication in monorepos: All packages and versions share the same cache, which avoids redundant installations.
+
+
+### Strict and Deterministic Installations
+
+-	Strict node_modules layout: pnpm prevents packages from accessing undeclared dependencies by default (unlike npm, which flattens dependencies).
+-	Better adherence to package.json: If a dependency is not declared, it’s not accessible. This encourages correct dependency declarations.
+-	Reproducibility: pnpm-lock.yaml combined with pnpm’s structure leads to more deterministic builds compared to npm.
+
+### Isolation and Compatibility
+
+-	Isolated node_modules: No pollution from global installs or peer dependencies leaking into unrelated packages.
+-	Better handling of peerDependencies: pnpm forces you to satisfy peer dependencies correctly, helping avoid runtime errors.
+
+### CLI Features and Ecosystem
+
+-	Commands like `pnpm why`, `pnpm m ls`, `pnpm m run` in monorepos are fast and powerful.
+-	Good integration with CI workflows and modern JavaScript tooling.
+
+### When to Use pnpm
+
+Use pnpm if:
+
+-	You’re working in a monorepo.
+-	You want to optimize CI performance.
+-	You care about strict dependency boundaries.
+-	You want to save disk space across projects.
+
+## Migration Steps
+
+Here is my migration experience for a Node.js application.
+
+### Install `pnpm`:
+
+```sh
+# on Mac
+❯ brew install pnpm
+
+# with node.js installed
+❯ npm install -g pnpm
+```
+
+## Steps
+
+```sh
+
+# Remove existing dependencies and the NPM lock file
+❯ rm -rf node_modules package-lock.json
+
+# Optional: clear .npmrc and .npm cache if they contain custom registry settings
+❯ rm -rf ~/.npmrc ~/.npm
+
+# Install dependencies
+❯ pnpm install
+```
+
+## Update Scripts
+
+- `npm run test` => `pnpm test`
+- `npm start` => `pnpm start`
+- `npx prisma migrate dev --name "$1" --schema=app/prisma/schema.prisma` => `pnpm dlx prisma migrate dev --name "$1" --schema=app/prisma/schema.prisma`
+
+## Update `Dockerfile`
+
+Install `PNPM` and migrate related commands:
+
+```Dockerfile
+RUN npm install -g pnpm@latest-10
+
+RUN pnpm install
+
+RUN pnpm dlx prisma generate --schema=app/prisma/schema.prisma
+
+CMD ["pnpm", "start"]
+
+```
+
+## Update CI/CD
+
+- Use `pnpm/action-setup`
+- Use cache to reduce installation time
+
+```yml
+on:
+  - push
+  - pull_request
+jobs:
+  deploy:
+    name: Deploy to AWS ECS - ${{ inputs.environment }}
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.branch }}
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+          run_install: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22.x"
+          cache: "pnpm"      
+```
+
+## References
+
+- [pnpm/action-setup](https://github.com/pnpm/action-setup)
+- [pnpm](https://pnpm.io)
