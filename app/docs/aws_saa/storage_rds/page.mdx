@@ -1,0 +1,109 @@
+---
+title: "RDS"
+description: "AWS RDS (Relational Database Service) - a managed database service with automated provisioning, backups, and scaling capabilities."
+---
+### RDS
+
+- Relational Database Service, a managed service
+- automated provisioning, OS patching
+- continuous backups and restore to specific timestamp (Point In Time Restore)
+- monitoring dashboards
+- read replicas for improved read performance
+- Multi AZ setup for DR (Disaster Recovery)
+- maintenance windows for upgrades
+- scaling capability (vertical and horizontal)
+- storage backed by EBS (gp2 or io1)
+
+### Storage Auto Scaling
+
+- when RDS detects you are running out of free database storage, it scales automatically
+- you have to set Maximum Storage Threshold
+
+### Deployment Options
+
+- **Multi AZ DB instance** 
+    - creates a primary DB instance with one standby DB instance in a different AZ
+    - provides high availability and data redundancy, but the standby replica cannot serve read traffic
+    - increased write and commit latency (recommend to use Provisioned IOPS for better performance)
+    - auto-failover to the standby replica
+- **Multi AZ DB cluster**
+    - creates a DB cluster with a primary DB instance and two readable standby DB instances, with each DB instance in a different AZ
+    - provides high availability, data redundancy and increases capacity to serve read workloads
+    - semi-synchronous replication, which requires acknowledgment from at least one reader DB instance
+    - auto-failover to one of the reader DB instances
+- **Single DB instance**
+    - creates a single DB instance with no standby DB instances
+- **Read replicas**
+    - main purpose is scalability
+    - asynchronous replication, all read replicas are accessible and can be used for read scaling
+- **Multi-Region**
+    - main purpose is disaster recovery and local performance
+    - asynchronous replication and all regions are accessible and can be used for reads
+- **Multi-AZ**:
+    - Convert RDS instance from Single-AZ to Multi-AZ, the following happens:
+        - a snapshot of your primary instance is taken
+        - a new standby instance is created in a different AZ from the snapshot
+        - synchronous replication is configured between primary and standby instances
+        - no downtime incurred, but the latency might increase due to the synchronous replication
+    - During Multi-AZ failover, the following happens:
+        - failover is automatically handled by RDS without administrative intervention
+        - RDS simply **flips the canonical name record (CNAME)** for your DB instance to point at the standby, which is in turn promoted to become the new primary
+        - the failover typically completes within one or two minutes
+    - The following events would case RDS to initiate a failover to the standby replica:
+        - loss of availability in primary AZ
+        - loss of network connectivity to primary
+        - compute unit failure on primary
+        - storage failure on primary
+
+> When creating a new RDS database, you can choose the `Deployment options` from Multi-AZ DB cluster, Multi-AZ DB instance and Multi-AZ DB instance. 
+> For existing RDS databases, you can `Create new replica` and the new replica can be in different regions.
+
+### RDS vs RDS Custom
+
+- RDS: entire database and the OS to be managed by AWS
+- RDS Custom:
+  - managed Oracle and Microsoft SQL Server database with OS and database customisation
+  - full admin access to the underlying OS and the database
+
+### Security
+
+- data at-rest encryption
+  - master and replicas, KMS, enabled at launch time
+  - un-encrypted database => DB snapshot => restore as encrypted
+  - master is un-encrypted, then replicas cannot be encrypted
+- in-flight encryption: TLS-ready by default
+- IAM database authentication
+- Audit logs
+- no SSH except for RDS custom
+
+### RDS Proxy
+
+- allows apps to pool and share DB connections established with the database
+- improves database efficiency by reducing stress on database resources (CPU & RAM) and minimise open connections (timeout)
+- serverless, auto-scaling, highly available (multi AZ)
+- never publicly accessible (must be accessed from VPC)
+- use case: lambda function (auto scale) => RDS proxy (pool connections) => RDS
+
+### Monitoring
+
+- **Performance Insights**
+    - a database performance tuning and monitoring feature that helps you quickly assess the load on your database
+    - uses lightweight data collection methods that don't impact the performance of your application, and makes it easy to see which SQL statements are causing the load and why
+- **Enhanced monitoring**
+    - You can monitor the operating system of your DB instance in real time
+    - When you want to see how different process or threads use the CPU, Enhanced Monitoring metrics are useful. 
+    - You can view all the system metrics and process information for your RDS DB instances on the console
+    - Metrics:
+        - processList: 
+            - RDS child processes
+            - RDS processes
+            - OS processes
+        - cpuUtilization:
+            - guest
+            - idle, steal
+            - total, user, system
+        - memory:
+            - active, cached, dirty, free
+    - Difference between CloudWatch and Enhanced Monitoring
+        - CloudWatch gathers metrics about CPU utilisation from the *hypervisor* for the DB instance
+        - Enhanced Monitoring gathers its metrics from an *agent* on the DB instance

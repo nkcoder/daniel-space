@@ -1,0 +1,249 @@
+---
+title: "S3"
+description: "AWS S3 (Simple Storage Service) - a scalable object storage service with multiple storage classes, security features, and lifecycle management."
+---
+## Bucket Versioning
+
+- a means of keeping multiple variants of an object in the same bucket; you can use versioning to preserve, retrieve, and restore every version of every object stored in the bucket
+- with versioning, you can easily recover from both unintended user actions and application failures
+- MFA delete: an additional layer of security that requires multi-factor authentication for changing bucket versioning settings and permanently deleting object versions
+
+## Object Lock
+
+- Store objects with a write-once-read-many (WORM) model to help you prevent objects from being deleted or overwritten for a fixed amount of time or indefinitely
+- Works only in versioned buckets
+- After you enable Object Lock for a bucket, you can't disable Object Lock or suspend versioning for that bucket
+- **Retention mode**:
+    - *Governance*: Users with specific IAM permissions can overwrite or delete protected object versions during the retention period
+        - users with `s3:BypassGovernanceRetention` permission, and the root user have the write permission
+    - *Compliance*: No users (including the root user) can overwrite or delete protected object versions during the retention period
+- **Legal Hold vs Retention Period**
+    - Legal hold: with Object Lock, you can also place a legal hold on an object version. Like a retention period, a legal hold prevents an object version from being overwritten or deleted. However, a legal hold doesn't have an associated retention period and remains in effect until removed. Legal holds can be freely placed and removed by any user who has the `s3:PutObjectLegalHold` permission.
+    - Legal holds are independent from retention periods. As long as the bucket that contains the object has Object Lock enabled, you can place and remove legal holds regardless of whether the specified object version has a retention period set. Placing a legal hold on an object version doesn't affect the retention mode or retention period for that object version.
+    - For example, suppose that you place a legal hold on an object version while the object version is also protected by a retention period. If the retention period expires, the object doesn't lose its WORM protection. Rather, the legal hold continues to protect the object until an authorized user explicitly removes it. Similarly, if you remove a legal hold while an object version has a retention period in effect, the object version remains protected until the retention period expires.
+    - Use case: you're tasked with ensuring that no object can be overwritten or deleted by any user in a period of one year only, you should enable S3 Object Lock in compliance mode with a retention period of one year.
+
+## S3 Data Encryption
+
+- Server-side encryption
+    - encrypts objects before saving on disk in AWS data centers, then decrypts the objects when you download them
+    - all S3 buckets have encryption (SSE-S3) configure by default, the encryption algorithm is AES256
+    - you can change the default encryption of the bucket to SSE-KMS, or DSSE-KMS (Duer-layer server-side encryption)
+    - you can also change the type of server-side encryption to use in your S3 **PUT** request
+
+- Client-side encryption
+    - you encrypt your data client-side and upload the encrypted data to S3
+    - you manage the encryption process and encryption keys
+
+## S3 Storage Class
+
+- The storage class is set on the object level, which means different storage class can coexist in the same bucket.
+### Frequent Access
+
+- S3 Standard
+    - general purpose storage for frequently accessed data
+    - low latency, high throughput performance, and hight availability (99.99%)
+    - use cases:
+        - cloud applications, dynamic websites, content distribution
+        - mobile and gaming applications, and big data analytics
+
+- S3 Intelligent-Tiering
+    - for data with changing or unknown access patterns
+    - automatically move data to the most cost-effective access tiers based on access frequency, without performance impact, retrieval fees, or operational overhead
+    - _Frequent_, _Infrequent_, and _Archive Instant Access_ tiers have the same low-latency and high-throughput performance of S3 Standard
+    - small monthly monitoring and automatic charge
+
+- S3 Express One Zone
+    - high-performance and single AZ for most frequently accessed data and latency-sensitive applications
+    - can improve data access speeds by 10x and reduce request cost by 50% compared to S3 Standard
+    - optimized for large datasets with many small objects
+
+### Infrequent Access
+
+- S3 Standard-IA
+    - for data that is accessed less frequently, but requires rapid access when needed
+    - same low latency and high throughput performance of S3 Standard
+    - low per DB storage price and per GB retrieval charge
+    - ideal for long-term storage, backups, and as a data store for disaster recovery files
+
+- S3 One Zone-IA
+    - for data that is accessed less frequently, but requires rapid access when needed
+    - stores data in one AZ and cost 20% less than S3 Standard-IA
+    - use cases:
+        - for customers who want a lower-cost option for infrequently accessed data but do not require the availability and resilience of S3 Standard or S3 Standard-IA
+        - store secondary backup copies of on-premise data or easily re-creatable data
+
+### Archive
+
+- S3 Glacier Instant Retrieval
+    - for long-lived data that is rarely accessed (a few times per year) and requires retrieval in milliseconds
+    - same throughput and latency as S3 Standard and S3 Standard-IA
+    - use cases:
+        - archive data that needs immediate access, such as medical images, user-generated content archives
+
+- S3 Glacier Flexible Retrieval
+    - for archive data that is accessed 1-2 times per year and is retrieved **asynchronously**
+    - retrieval time within minutes or hours
+    - for data that does not require immediate access but needs the flexibility to retrieve large sets of data at no cost, such as:
+        - backup or disaster recovery use cases
+
+- S3 Glacier Deep Archive
+    - for archive data that is very rarely accessed and very low cost
+    - retrieval time within 12 hours
+    - designed for customers
+        - that particularly those in highly-regulated industries, such as financial services, healthcare and public sectors
+        - that retain data sets for 7 - 10 years or longer to meet regulatory compliance requirements
+    
+### Lifecycle Configuration
+
+- A set of rules that define actions that Amazon S3 applies to a group of objects. 
+- You can filter objects by prefix, object tags, object size, or whatever combination suits your use case
+- Lifecycle rules run once per day.
+- Actions you want Amazon S3 to take during an object's lifetime such as transitioning objects to another storage class, archiving them, or deleting them after a specified period of time
+
+- By default, objects less than 128KB will not transition across any storage class because the transition costs can outweigh the storage savings
+- 30 days minimum: a lifecycle rule cannot transition or delete an object before 30 days have passed; no explicit maximum
+## Static website hosting
+
+- Create a S3 bucket, enable `Static website hosting` in **Properties**
+    - need to specify _index.html_
+- set permissions for website access under **Permissions**
+    - turn off `Block all public access`
+    - add a bucket policy for public read
+  ```json
+  {
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Sid": "PublicReadGetObject",
+        "Effect": "Allow",
+        "Principal": "*",
+        "Action": ["s3:GetObject"],
+        "Resource": ["arn:aws:s3:::your-bucket-name/*"]
+      }
+    ]
+  }
+  ```
+- if you use Route 53 to route traffic the S3 bucket directly, the bucket name must be the same as the domain or subdomain name
+- an S3 bucket configured as a website endpoint doesn't support SSL/TLS, so you need to route traffic to the CloudFront distribution and use the S3 bucket as the origin for the distribution
+
+## Retrieve archive from S3 Glacier
+
+- It's an asynchronous operation
+    - you first initiate a job (POST REST API, AWS CLI, or AWS SDKs)
+    - you can download all bytes or specify a byte range to download only a portion of the job output
+
+### Archive Retrieval Options
+
+When initiating a job to retrieve an archive, you can specify the following retrieval options based on _access time_ and _cost requirement_:
+- Expedited:
+  - quickly access archive data when occasional urgent requests for restoring archives are required.
+  - for large archives (more than 250MB), it's typically available within 1-5 minutes.
+  - _Provisioned capacity_ ensures that retrieval capacity for Expedited retrievals is available when you need it
+- Standard:
+  - the default option when on option is specified
+  - typically completes with 3-5 hours
+- Bulk:
+  - the lowest-cost option
+  - used to retrieve large amounts, even petabytes, of data inexpensively in a day
+  - typically completed within 5-12 hours
+
+**Provisioned Capacity**:
+
+- it helps ensure that your retrieval capacity for Expedited retrievals is available when you need it.
+- if your workload requires highly reliable and predictable access to a subset of your data in minutes, we recommend you to purchase provisioned retrieval capacity
+- if you require access to _expedited retrievals_ under all circumstances, you must purchase provisioned retrieval capacity
+
+## S3 presigned URLs
+
+- By default, all S3 objects are private, only the object owner has permission to access them
+- The owner can share objects by creating a presigned URL
+- A presigned URL use security credentials to grant time-limited permission to download objects
+- A presigned URL is limited by the permissions of the user who creates it. You can upload an object only if the creator of the presigned URL has the necessary permissions to upload the object.
+
+## Event notification
+
+- You can receive notifications when certain events happen in your buckets.
+- Event notifications are designed to be delivered at least once
+- Typically, event notifications are delivered in seconds but can sometimes take a minute or longer
+- Event types:
+    - object create events: s3:ObjectCreated:*
+    - object removal events: s3:ObjectRemoved:*
+        - s3:ObjectRemoved:Delete => Permanently deleted
+        - s3:ObjectRemoved:DeleteMarkerCreated => Delete marker created
+    - object restore events: s3:ObjectRestore:*
+    - replication events: s3:Replication:*
+    - lifecycle events: s3:LifecycleTransaction, s3:LifecycleExpiration:\*
+- Destination
+    - lambda function
+    - SNS topic
+    - SQS queue
+
+## Object deletion
+
+- Without versioning:
+  - When you delete an object, it is removed from the bucket permanently. There is no way to recover the object once it is deleted.
+
+- With versioning
+  - every object in the bucket gets a unique version ID. Deleting an object in this case does not immediately remove it. Instead, a new version of the object is created with a **Delete Marker**.
+
+- Deletion Marker
+  - A delete marker is a special kind of object that represents a "deleted" state for the object.
+  - When you delete an object, S3 places a delete marker as the latest version of the object. The actual content of the object is still in the bucket under a different version ID.
+  - For example, if an object had the version IDs v1, v2, and v3, and you delete it, S3 places a delete marker as the new v4. The object is not truly gone, but the delete marker makes it appear as though it has been deleted.
+  - When you list objects in the bucket, the object is considered deleted if there is a delete marker for that object. However, you can retrieve the previous versions by specifying the version ID.
+
+- Permanent Deletion with Versioning
+  - To permanently delete an object with versioning enabled, you need to **delete the specific version** (including the delete marker if applicable)
+  - Once the delete marker is added, the object is logically deleted, but the underlying versions of the object still exist in the bucket.
+  - To **permanently delete** the object, you need to explicitly delete all versions, including the delete marker.
+    - You can do this using the **DeleteObject** API with the version ID of the object you want to delete.
+    - You can also use the **DeleteObjects** API to delete multiple objects or versions at once.
+
+## S3 Permissions
+
+- **Block public access (bucket settings)**
+    - Public access is granted to buckets and objects through access control lists (ACLs), bucket policies, access point policies, or all. In order to ensure that public access to all your S3 buckets and objects is blocked, turn on Block all public access.
+- **Bucket policy**: 
+    - The bucket policy, written in JSON, provides access to the objects stored in the bucket. Bucket policies don't apply to objects owned by other accounts.
+    - You can still grant access to a **specific principal** (e.g., an IAM role attached to an EC2 instance). That is not considered "public" because it doesn't involve granting access to everyone.
+- **Object Ownership:** 
+    - Control ownership of objects written to this bucket from other AWS accounts and the use of access control lists (ACLs). Object ownership determines who can specify access to objects.
+    - If enabled, then ACLs are disabled. All objects in this bucket are owned by this account. Access to this bucket and its objects is specified using only policies.
+- When you upload an object to a bucket in the AWS console, you can configure the *Permissions (ACL)* and *Properties (storage class, object lock, server side encryption)*. You can make the object public accessible via ACL only when Block public access and Object Ownership are disabled.
+
+- **Cross-origin resource sharing (CORS)**
+    - It defines a way for client web applications that are loaded in one domain to interact with resources in a different domain
+    - A CORS configuration is a document that defines rules that identify the origins that you will allow to access your bucket
+  ```json
+        [
+            {
+                "AllowedHeaders": [
+                    "*"
+                ],
+                "AllowedMethods": [
+                    "PUT",
+                    "POST",
+                    "DELETE"
+                ],
+                "AllowedOrigins": [
+                    "http://www.example.com"
+                ],
+                "ExposeHeaders": [
+                    "x-amz-server-side-encryption",
+                    "x-amz-request-id",
+                    "x-amz-id-2"
+                ],
+                "MaxAgeSeconds": 3000
+            }
+        ]
+        ```
+
+## Requester Pays
+
+- In general, bucket owners pay for all Amazon S3 storage and data transfer costs that are associated with their bucket. However, you can configure a bucket to be a _Requester Pays_ bucket.
+- With Requester Pays buckets, the requester instead of the bucket owner pays the cost of the request and the data download from the bucket. The bucket owner always pays the cost of storing data.
+- If you enable Requester Pays on a bucket, **anonymous access to that bucket is not allowed**.
+- Typically, you configure buckets to be Requester Pays buckets when you want to share data but not incur charges associated with others accessing the data. For example, you might use Requester Pays buckets when making available large datasets, such as zip code directories, reference data, geospatial information, or web crawling data.
+- After you configure a bucket to be a Requester Pays bucket, requesters must show they understand that they will be charged for the request and for the data download.
+    - To show they accept the charges, requesters must either include `x-amz-request-payer` as a header in their API request for DELETE, GET, HEAD, POST, and PUT requests, or add the `RequestPayer` parameter in their REST request.

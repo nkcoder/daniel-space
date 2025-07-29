@@ -7,6 +7,11 @@ const meta: MetaRecord = {
   serverless_ecs: "Serverless ECS",
   serverless_lambda: "Serverless Lambda",
   serverless_eks: "Serverless EKS",
+  storage_s3: "S3",
+  storage_rds: "RDS",
+  storage_aurora: "Aurora",
+  storage_dynamodb: "DynamoDB",
+  storage_elasticache: "ElastiCache",
 };
 
 export default meta;

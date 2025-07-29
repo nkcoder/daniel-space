@@ -1,0 +1,50 @@
+---
+title: "Aurora"
+description: "AWS Aurora database service - a cloud-optimized relational database that supports both PostgreSQL and MySQL with high availability and performance."
+---
+## Aurora
+
+- AWS proprietary database, not open source
+- cloud optimised, supports both Postgres and MySQL, up to 5x performance over MySQL, and 3x performance of Postgres on RDS
+- storage automatically grows in increments of 10GB, up to 128TB
+- can have up to 15 replicas, and the replication process is faster than MySQL
+- failover in Aurora is instantaneous, it's HA native
+
+- High Availability and Read Scaling
+  - 6 copies of your data across 3 AZ:
+    - shared storage volume across 3 AZ
+    - 4 copies out of 6 needed for writes
+    - 3 copies out of 6 needed for reads
+    - self healing with peer-to-peer replication
+    - storage is striped across 100 of volumes
+  - 1 Aurora instance takes writes (master), automated failover for master in less than 30 seconds
+  - master + up to 15 Aurora Read Replicas serve reads
+  - a writer endpoint points to the master, a reader endpoint points to all snapshots for load balancing
+  - support for cross-region replication
+  - read replicas auto scaling
+  - when you add a reader, it will be in the same region as the source database
+  
+## Aurora Global Database
+
+- An Aurora global database has a primary DB cluster in one Region, and up to five secondary DB clusters in different Regions. Aurora automatically synchronises all changes made in the primary DB cluster to one or more secondary clusters.
+- designed for globally distributed applications, allowing a single Aurora database to span multiple AWS regions. 
+- it replicates your data with no impact on database performance, enables fast local reads with low latency in each Region, and provides disaster recovery from Region-wide outages.
+- primary region: master (read/write), replicas (read); secondary regions: only read
+- cross region replication takes less than 1 second (RPO 1 second)
+
+- **advantages**:
+  - Global reads with local latency
+  - Scalable secondary Aurora DB clusters
+  - Fast replication from primary to secondary Aurora DB clusters
+  - Recovery from Region-wide outages
+  
+- **limitations**:
+  - Aurora Global Database is available in certain AWS Regions and for specific Aurora MySQL and Aurora PostgreSQL versions
+  - Doesn't support Aurora Auto Scaling for secondary DB clusters
+  - You can perform managed cross-Region switchovers or failovers with Aurora Global Database only if the primary and secondary DB clusters have the same major and minor engine versions
+  - You can't stop or start the Aurora DB clusters in your global database individually
+    
+## Aurora database clone
+
+- create a new database cluster from an existing one
+- can also clone across region, but need to share the database cluster to other AWS accounts in the same organisation
