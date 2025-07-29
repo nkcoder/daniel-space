@@ -10,7 +10,7 @@ const meta: MetaRecord = {
     type: "page"
   },
   docs: {
-    title: "Documentation",
+    title: "Docs",
     type: "doc",
   },
   blogs: {
