@@ -1,0 +1,45 @@
+---
+title: Effective Final in Lambdas
+description: Understanding the concept of effectively final variables in Java lambdas and how they differ from instance
+---
+
+## Understanding Effectively Final Variables in Java Lambdas
+
+Let's start with a simple example to illustrate the concept of effectively final variables in Java lambdas.
+
+```java
+public class LambdaEffectiveFinal {
+  String name = "";
+
+  public static void main(String[] args) {
+    int x = 10;
+
+    // x++; // local variable 'x' is effectively final here because it is used in a lambda expression below.
+    Function<Integer, Boolean> lambda = y -> {
+      LambdaEffectiveFinal2 instance1 = new LambdaEffectiveFinal2();
+      instance1.name = "instance1"; // instance/class vars are ok
+      // x++; // this would cause a compile error because 'x' is not effectively final
+      System.out.println("x == " + x + ", instance name " + instance1.name);
+      return x * 2 < y;
+    };
+
+    // x = 20; // local variable 'x' is effectively final here because it is used in the lambda function.
+    System.out.println(lambda.apply(25)); // prints true, because x is 11 here
+
+    new LambdaEffectiveFinal2().name = "instance2"; // instance/class vars are ok
+  }
+}
+```
+
+For the above program, we try to change the value of the local variable `x` in three different places (before, inside and after the lambda), which is not allowed.
+
+**Local variables** (like `x` in the main method) used inside a lambda must be final or effectively final. This means their value cannot change after they are assigned, because lambdas capture their value at the time the lambda is created. Allowing changes would lead to confusing or inconsistent behavior, since the lambda might see a different value than the enclosing method.
+
+**Instance variables** (like `name` in the class) are different. They belong to the object, not the method. Lambdas can freely read and modify instance (and static) variables, because they are not part of the lambda’s captured local state—they are always accessed via the object reference, and their value can change at any time.
+
+**Summary:**
+
+- Local variables in lambdas must not change (must be final/effectively final).
+- Instance/class variables can be changed inside lambdas.
+
+This rule ensures thread safety and predictability for lambdas using local variables.

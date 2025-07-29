@@ -1,0 +1,159 @@
+---
+title: AWS EC2 storage
+description: Overview of Amazon EC2 storage options, including EBS, EFS, and instance store, and their use cases.
+---
+### AMI
+
+- Build AMI from an EC2 instance
+    - start an EC2 instance and customize it
+    - stop the instance (for data integrity)
+    - build an AMI - this will also create EBS snapshots
+    - launch EC2 instances from other AMIs
+### EC2 instance store
+
+- EBS volumes are network drives with good but *limited* performance
+- If you need a high-performance hardware disk, use EC2 instance store  
+    - better I/O performance
+    - will lose the storage if the instance is stopped
+    - good for buffer/cache/scratch data/temporary content
+    - risk of data loss if hardware fails
+    - backups and replication are your responsibility
+- storage optimised instance types (i2, i3, i4) have instance store
+### EBS
+
+- EBS (Elastic Block Store) volume is a network drive that you can attach to your instance when they run
+    - it's a network drive, not a physical drive, which means there might be a bit of latency
+    - it can be detached from an EC2 instance and attached to another one quickly
+    - some EBS can be attached to multiple instances (multi-attach)
+- Availability: when you create an EBS volume, it is automatically replicated within its AZ to prevent data loss due to failure of any single hardware component
+- Persistence: an EBS volume is off-instance storage that can persist independently from the life of an instance
+    - it has a provisioned capacity (size in GBs and IOPS)
+    - you can increase the capacity of the drive over time
+    - Delete on termination
+        - root volume: default is true which means it will delete the root volume of the instance when the instance terminates; the default value can be changed when launching the instance
+        - non-root volume: default is false which means it will preserve the volumes; you can take a snapshot of the preserved volume or attach it to another instance
+- AZ: they're bound to a specific availability zone
+    - you can attach an EBS volume to any EC2 instance in the same AZ
+    - but an EBS volume in one AZ cannot be attached to another AZ
+- Flexibility: EBS volumes support live configuration changes while in production, which means you can modify volume types, volume size and IOPS capacity without service interruptions. 
+- Analogy: think of them as a `network USB stick` 
+#### EBS snapshots
+
+- Make a backup (snapshot) of your EBS volume at a point in time
+- Not necessary to detach volume to do snapshot, but recommended
+- Can copy snapshot across AZ or Region
+    - EBS snapshot archive
+        - move a snapshot to an `archive tier` that is 75% cheaper
+        - takes within 24 to 72 hours for restoring the archive
+    - Recycle bin for EBS snapshots
+        - setup rules to retain deleted snapshots so you can recover them after an accidental deletion
+        - specify snapshot retention (from 1 day to 1 year)
+    - Fast snapshot restore (FSR)
+        - force full initialisation of snapshot at creation to have no latency on the first use (incur charges)
+#### EBS volume types
+
+- **General Purpose SSD (gp2/gp3)**: balance price and performance for a wide variety of workloads
+    - cost effective storage, low latency
+    - volume size: 1GiB - 16TiB
+    - max throughput 250MiB/s (gp2), 1000MiB/s (gp3)
+    - max IOPS: 16000
+    - for gp3: you can increase IOPS up to 16000 and throughput up to 1000 **independently**
+    - use cases
+        - transactional workloads
+        - medium-sized, single-instance databases
+        - boot volumes, development and test environments
+
+- **Provisioned IOPS SSD (io1, io2 block express)**: high performance SSD volume for mission-critical low-latency or high-throughput workloads
+    - volume size: 4GiB - 64TiB (io2 block express), 4GiB - 16TiB (io1)
+    - max throughput: 4000MiB/s (io2 block express) 1000MiB/s (io1)
+    - max IOPS: 256000 (io2 block express), 64000 (io1)
+- io2 block express use cases:
+    - sub-millisecond latency
+    - sustained IOPS performance
+    - more than 64000 IOPS or 1000 MiB/s of throughput
+  - io1 use cases
+    - workloads that require sustained IOPS performance or more than 16000 IOPS
+    - I/O intensive database workloads
+
+- **Throughput Optimised HDD**: low cost HDD volume designed for frequently accessed
+    - max IOPS: 500, max throughput: 500MiB/s
+    - use cases:
+        - big data
+        - data warehouses
+        - log processing
+
+- **Cold HDD**: lowest cost HDD volume designed for less frequently accessed workloads
+    - max IOPS: 250, max throughput: 250MiB/s
+    - use cases:
+        - throughput-oriented storage for data that is infrequently accessed
+        - scenarios where the lowest storage cost is important
+
+- Can be used as boot volumes: gp2/gp3, io1/io2 block express
+- Supports EBS multi-attach: io1/io2 block express
+#### EBS Lifecycle Manager
+
+- Automate the creation, retention, copy and deletion of snapshots and AMIs
+    - fast snapshot restore integration
+    - built-in cross-region copy
+    - automated cross-account snapshots copy
+#### EBS multi-attach
+
+- attach the same EBS volume to up to 16 EC2 instances built on Nitro System in the same AZ
+- each instance has full read & write permissions to the high-performance volume
+- only Provisioned IOPS SSD (io1 and io2) volume supports multi-attach
+#### EBS encryption
+
+- You can create an encrypted EBS volume:
+    - data at rest is encrypted inside the volume
+    - all the data in flight moving between the instance and the volume is encrypted
+    - all snapshots are encrypted
+    - all volumes created from the encrypted snapshots are encrypted
+- Encryption and decryption are handled transparently using the keys from KMS (you have nothing to do)
+- Encryption has a minimal impact on latency
+- You can enable encryption when copying an unencrypted snapshot
+#### EBS RAID Configuration
+
+- Creating a RAID 0 array allows you to achieve a higher level of performance for a file system than you can provision on a single Amazon EBS volume.
+- Use RAID 0 when I/O performance is of the utmost importance.
+- With RAID 0, I/O is distributed across the volumes in a stripe. If you add a volume, you get the straight addition of throughput and IOPS.
+- However, keep in mind that performance of the stripe is limited to the worst performing volume in the set, and that the loss of a single volume in the set results in a complete data loss for the array.
+
+### EFS
+
+- Elastic File System: serverless, full elastic file storage that can be mounted on many EC2
+- EFS works with EC2 instances in multi-AZ, compatible with Linux based AMI
+- Use security groups to control access to EFS, encryption at rest using KMS
+- Performance mode
+    - general purpose (recommended): high performance and latency-sensitive applications
+    - max I/O: highly parallelised workloads that can tolerate higher latencies
+- Throughput mode
+      - elastic: for workloads with un-predicable I/O, performance automatically scales with your workloads
+      - provisioned: set your throughput
+      - bursting: throughput scales with the amount of storage for workloads with basic performance
+- Highly scalable, highly available and highly durable, pay-per-use, no capacity planning
+      - regional (recommended): store data redundantly across multiple AZ within one region
+      - one zone: store data within a single AZ in one region
+- Storage layer
+      - Standard: frequently access files
+      - IA (infrequent access): cost to retrieve files, lower price to store
+      - Archive: cost optimised for data that is accessed only a few times each year or less
+- **The EFS lifecycle policies**
+    - *transition to IA*: by default, files that are not accessed in Standard storage for 30 days are transitioned into IA.
+        - from 1 day to 365 days since last access
+    - *transition to Archive*: by default, files that are not accessed in Standard storage for 90 days are transitioned into Archive.
+        - from 60 days to 365 days since last access 
+    - *Transition into Standard*: by default, files are not moved back to Standard storage, and they remain in the IA or Archive storage class when they are accessed. For performance-sensitive use cases that demand the fastest latency performance, choose to transition files into Standard storage **on first access**.
+        - None, or *On first access*
+
+### EFS vs EBS
+
+- EBS volumes
+    - attach to one instance (except multi-attach io1/io2)
+    - are locked at the AZ level
+    - to migrate an EBS volume across AZ
+        - take a snapshot
+        - restore the snapshot to another AZ
+- EFS 
+    - mount to 100 of instances across AZ
+    - only for Linux instances
+    - has a higher price point than EBS, can leverage EFS-IA/archive for cost savings
