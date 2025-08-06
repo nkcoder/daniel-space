@@ -49,6 +49,7 @@ description: Learn about AWS uncommon services in AWS
 ## Amazon Rekognition
 
 Amazon Rekognition is a cloud-based image and video analysis service that makes it easy to add advanced computer vision capabilities to your applications.
+
 - it can search, verify, and organize millions of images and videos
 - you can proactively detect inappropriate, unwanted or offensive content
 - you can define an interface **VPC endpoint** for Amazon Pekognition, which communicates with resources on your VPC without going through the public internet
@@ -61,15 +62,15 @@ Amazon Rekognition is a cloud-based image and video analysis service that makes 
 - you can coordinate work across distributed components, tracking the state of tasks (which can run either on AWS, or on-premises)
 
 - Services that can be used to create a decoupled architecture for applications that use both AWS and on-premise resources?
-    - Amazon SWF (Simple Workflow)
-    - SQS/SNS
-    - ELB (in the target group, the `IP Address` target type supports load balancing to VPC and on-premises resources)
+  - Amazon SWF (Simple Workflow)
+  - SQS/SNS
+  - ELB (in the target group, the `IP Address` target type supports load balancing to VPC and on-premises resources)
 
 ## Amazon EMR
 
 - EMR: Elastic Map Reduce
 - a managed cluster platform that simplifies running big data frameworks, such as Apache Hadoop and Apache Spark on AWS to process and analyze vast amount of data
-- It securely and reliably handles a broad set of big data use cases, including log analysis, web indexing, data transformations (ETL), machine learning, financial analysis, scientific simulation and bioinformatics. 
+- It securely and reliably handles a broad set of big data use cases, including log analysis, web indexing, data transformations (ETL), machine learning, financial analysis, scientific simulation and bioinformatics.
 - ![EMR Workflow](./EMR-workflow.png)
 
 ## Amazon Redshift
@@ -85,6 +86,7 @@ Amazon Rekognition is a cloud-based image and video analysis service that makes 
 AWS Storage Gateway gives your applications on-premises and in-cloud access to virtually unlimited cloud storage. You can deploy it as a Virtual Machine (VM) within VMware, Hyper-V or as an EC2 instance within VPC.
 
 Storage Gateway types:
+
 - File Gateway
 - Amazon FSx File Gateway
 - Tape Gateway
@@ -99,28 +101,29 @@ For example, you can use a Tape Gateway to replace physical tapes on-premises wi
 - You can visually create, run, and monitor extract, transform, and load (ETL) pipelines to load data into your data lakes
 - You can immediately search and query cataloged data using Amazon Athena, Amazon EMR, and Amazon Redshift Spectrum.
 - Features:
-    - Discover and organize data
-    - Transform, prepare, and clean data for analysis
-    - Build and monitor data pipelines
+  - Discover and organize data
+  - Transform, prepare, and clean data for analysis
+  - Build and monitor data pipelines
 
 - **Job bookmarks**:
-    - AWS Glue tracks data that has already been processed during a previous run of an ETL job by persisting state information from the job run. This persisted state information is called a job bookmark.
-    - Job bookmarks help AWS Glue maintain state information and prevent the reprocessing of old data. With job bookmarks, you can process new data when rerunning on a scheduled interval.
-    - A job bookmark is composed of the states for various elements of jobs, such as sources, transformations, and targets. For example, your ETL job might read new partitions in an Amazon S3 file. AWS Glue tracks which partitions the job has processed successfully to prevent duplicate processing and duplicate data in the job's target data store.
+  - AWS Glue tracks data that has already been processed during a previous run of an ETL job by persisting state information from the job run. This persisted state information is called a job bookmark.
+  - Job bookmarks help AWS Glue maintain state information and prevent the reprocessing of old data. With job bookmarks, you can process new data when rerunning on a scheduled interval.
+  - A job bookmark is composed of the states for various elements of jobs, such as sources, transformations, and targets. For example, your ETL job might read new partitions in an Amazon S3 file. AWS Glue tracks which partitions the job has processed successfully to prevent duplicate processing and duplicate data in the job's target data store.
 
 ## Amazon Transcribe
 
-Amazon Transcribe is an automatic speech recognition service that uses machine learning models to convert audio to text(audio => text). 
+Amazon Transcribe is an automatic speech recognition service that uses machine learning models to convert audio to text(audio => text).
 
 You can use Amazon Transcribe as a standalone transcription service or to add speech-to-text capabilities to any application.
 
 You can transcribe media in real time (streaming) or you can transcribe media files located in an Amazon S3 bucket (batch).
 
-## Amazon Translate 
+## Amazon Translate
 
 Amazon Translate is a neural machine translation service for translating text to and from English across a breadth of supported languages (language translation).
 
 **Use cases**
+
 - Enable multilingual user experiences in your applications by integrating Amazon Translate
 - Process and manage your company's incoming data (such as social media and news feeds in many languages)
 - Enable language-independent processing by integrating Amazon Translate with other AWS services, for example:
@@ -130,18 +133,20 @@ Amazon Translate is a neural machine translation service for translating text to
 
 ## Amazon Comprehend
 
-Amazon Comprehend uses natural language processing (NLP) to extract insights about the content of documents (document => topics). 
+Amazon Comprehend uses natural language processing (NLP) to extract insights about the content of documents (document => topics).
 
 **Examples**:
+
 - Find documents about a subject
 - Find out how customers feel about your products
 - Discover what matters to your customers
 
 ## Amazon Polly
 
-Amazon Polly is a cloud service that converts text into lifelike speech (text => speech). 
+Amazon Polly is a cloud service that converts text into lifelike speech (text => speech).
 
 **Use cases**:
+
 - mobile applications such as newsreaders, games, eLearning platforms
 - accessibility applications for visually impaired people, and the rapidly growing segment of Internet of Things (IoT)
 
@@ -163,16 +168,16 @@ Unlike traditional keyword-based search, Amazon Kendra uses its semantic and con
 
 ## Amazon Detective
 
-Amazon Detective makes it easy to analyze, investigate, and quickly identify the root cause of security findings or suspicious activities. 
+Amazon Detective makes it easy to analyze, investigate, and quickly identify the root cause of security findings or suspicious activities.
 
 Detective automatically collects log data from your AWS resources and uses machine learning, statistical analysis, and graph theory to help you visualize and conduct faster and more efficient security investigations.
 
 ## AWS Artifact
 
 - provides on-demand downloads of AWS security and compliance documents, for example:
-    - reports on compliance with ISO standards 
-    - Payment Card Industry (PCI) Security standards reports
-    - System and Organisation Controls (SOC) reports
+  - reports on compliance with ISO standards
+  - Payment Card Industry (PCI) Security standards reports
+  - System and Organisation Controls (SOC) reports
 - you can download security and compliance documents for independent software vendors who sell their products on AWS marketplace
 - you can review, accept, and track the status of your agreements with AWS for your account and organisation
 
@@ -185,22 +190,22 @@ Detective automatically collects log data from your AWS resources and uses machi
 ## Amazon FSx for Lustre
 
 - A fully managed, high-performance file system optimised for workloads that require fast storage and rapid data processing
-- 
+-
 - Storage options:
-    - SSD storage options – For low-latency, IOPS-intensive workloads that typically have small, random file operations, choose one of the SSD storage options.
-    - HDD storage options – For throughput-intensive workloads that typically have large, sequential file operations, choose one of the HDD storage options.
+  - SSD storage options – For low-latency, IOPS-intensive workloads that typically have small, random file operations, choose one of the SSD storage options.
+  - HDD storage options – For throughput-intensive workloads that typically have large, sequential file operations, choose one of the HDD storage options.
 
 - **Key features**:
-    - High performance and low latency
-    - Scalability
-    - Seamless integration with Amazon S3
-    - Compatibility with the open source Lustre file system
+  - High performance and low latency
+  - Scalability
+  - Seamless integration with Amazon S3
+  - Compatibility with the open source Lustre file system
 
 - **Use cases**:
-    - High performance computing (HPC)
-    - Machine learning and artificial intelligence
-    - Video processing
-    - Financial modeling
+  - High performance computing (HPC)
+  - Machine learning and artificial intelligence
+  - Video processing
+  - Financial modeling
 
 ## Amazon FSx for Windows File Server
 
@@ -212,14 +217,14 @@ Detective automatically collects log data from your AWS resources and uses machi
 - It is a highly automated lift-and-shift (rehost) solution that simplifies, expedites, and reduces the cost of migrating applications to AWS.
 - It allows companies to lift-and-shift a large number of physical, virtual, or cloud servers without compatibility issues, performance disruption, or long cutover windows.
 - The process:
-    - Install AWS Replication Agent on your source servers. No reboot required.
-    - Application Migration Service automatically replicates entire servers, including operating system, applications, data, and configurations.
-    - Use the Application Migration Service console to perform non-disruptive tests in AWS prior to initiating a cutover.
-    - When you are ready, use the Application Migration Service console to execute a successful cutover. Your servers are launched on AWS within minutes.
+  - Install AWS Replication Agent on your source servers. No reboot required.
+  - Application Migration Service automatically replicates entire servers, including operating system, applications, data, and configurations.
+  - Use the Application Migration Service console to perform non-disruptive tests in AWS prior to initiating a cutover.
+  - When you are ready, use the Application Migration Service console to execute a successful cutover. Your servers are launched on AWS within minutes.
 - Use case:
-    - Data center to cloud migration: move your virtual and physical servers to AWS
-    - Cross-cloud migration: migrate workloads running on another public or private cloud to AWS
-    - Cross-region migration: migration between AWS accounts, availability zones, or regions
+  - Data center to cloud migration: move your virtual and physical servers to AWS
+  - Cross-cloud migration: migrate workloads running on another public or private cloud to AWS
+  - Cross-region migration: migration between AWS accounts, availability zones, or regions
 
 ## AWS Migration Hub
 
@@ -227,5 +232,5 @@ Detective automatically collects log data from your AWS resources and uses machi
 - You can visualize the connections and the status of the servers and databases that make up each of the applications you are migrating, regardless of which migration tool you are using.
 - Migration Hub gives you the choice to start migrating right away and group servers while migration is underway, or to first discover servers and then group them into applications. Either way, you can migrate each server in an application and track progress from each tool in the AWS Migration Hub.
 - It supports migration status updates from:
-    - Application Migration Service
-    - Database Migration Service
+  - Application Migration Service
+  - Database Migration Service

@@ -42,6 +42,7 @@ AWS Elastic Beanstalk is a Platform as a Service (PaaS) that simplifies deployme
 - **Debugging Complexity**: Harder to troubleshoot when things go wrong
 
 **Cost Considerations:**
+
 - Pay only for underlying EC2 instances, load balancers, and other AWS resources
 - Typically costs $20-200/month for small to medium applications
 
@@ -68,11 +69,13 @@ AWS Lambda enables serverless computing where you run code without managing serv
 - **Vendor Lock-in**: Heavily tied to AWS Lambda ecosystem
 
 **Cost Considerations:**
+
 - Free tier: 1M requests and 400,000 GB-seconds per month
 - Beyond free tier: ~$0.20 per 1M requests + compute time
 - Can be very cost-effective for low to moderate traffic
 
 **Node.js Specific Considerations:**
+
 - Use Lambda Layers for common dependencies
 - Optimize bundle size to reduce cold starts
 - Consider using Provisioned Concurrency for consistent performance
@@ -99,12 +102,14 @@ Amazon EC2 provides virtual servers in the cloud with complete control over the 
 - **High Learning Curve**: Requires deep AWS and system administration knowledge
 
 **Cost Considerations:**
+
 - t3.micro: ~$8.50/month (free tier eligible)
 - t3.medium: ~$30/month
 - Reserved instances: 30-70% savings for predictable workloads
 - Don't forget costs for storage, data transfer, and load balancers
 
 **Best Practices for Node.js on EC2:**
+
 - Use PM2 or similar process managers
 - Implement proper logging and monitoring
 - Use Application Load Balancer for high availability
@@ -132,11 +137,13 @@ Amazon ECS (Elastic Container Service) is a fully managed container orchestratio
 - **Debugging Complexity**: Container debugging can be more complex than traditional deployments
 
 **Cost Considerations:**
+
 - Fargate pricing: ~$0.04048 per vCPU per hour + $0.004445 per GB memory per hour
 - A typical Node.js app (0.25 vCPU, 0.5 GB): ~$15-30/month
 - ECS on EC2: ~30-50% cheaper but requires instance management
 
 **Node.js Optimization Tips:**
+
 - Use multi-stage Docker builds to minimize image size
 - Implement proper health checks
 - Use Alpine Linux base images for smaller containers
@@ -164,6 +171,7 @@ Amazon EKS (Elastic Kubernetes Service) is a managed Kubernetes service that sim
 - **Over-Engineering Risk**: May be overkill for simple applications
 
 **Cost Considerations:**
+
 - EKS cluster: $0.10 per hour (~$73/month)
 - Plus worker node costs (EC2 or Fargate)
 - Additional costs for load balancers, storage, and networking
@@ -176,12 +184,14 @@ Amazon EKS (Elastic Kubernetes Service) is a managed Kubernetes service that sim
 AWS App Runner is a newer fully managed service that makes it easy to quickly deploy containerized web applications and APIs at scale.
 
 **Pros:**
+
 - **Simplicity**: Minimal configuration required
 - **Automatic Scaling**: Scales based on traffic with no setup
 - **Integrated CI/CD**: Direct integration with source code repositories
 - **Cost-Effective**: Pay only for running applications
 
 **Cons:**
+
 - **Limited Customization**: Less control compared to ECS/EKS
 - **New Service**: Limited track record and ecosystem
 - **Regional Availability**: Not available in all AWS regions
@@ -200,20 +210,21 @@ Choose based on your priorities:
 
 ## Updated Comparison Table
 
-| Method               | Ease of Use | Management Overhead | Scalability | Cost  | Control | Best For                          |
-| -------------------- | ----------- | ------------------- | ----------- | ----- | ------- | --------------------------------- |
-| Elastic Beanstalk    | ⭐⭐⭐⭐⭐       | ⭐⭐                  | ⭐⭐⭐⭐        | ⭐⭐⭐   | ⭐⭐⭐     | Quick deployment, prototypes      |
-| Lambda + API Gateway | ⭐⭐⭐⭐        | ⭐                   | ⭐⭐⭐⭐⭐       | ⭐⭐⭐⭐⭐ | ⭐⭐      | Variable traffic, microservices   |
-| EC2                  | ⭐⭐⭐         | ⭐⭐⭐⭐⭐               | ⭐⭐⭐⭐        | ⭐⭐⭐   | ⭐⭐⭐⭐⭐   | Custom requirements, legacy apps  |
-| ECS/Fargate          | ⭐⭐⭐         | ⭐⭐                  | ⭐⭐⭐⭐⭐       | ⭐⭐⭐   | ⭐⭐⭐⭐    | Containerized apps, microservices |
-| EKS                  | ⭐⭐          | ⭐⭐⭐⭐⭐               | ⭐⭐⭐⭐⭐       | ⭐⭐    | ⭐⭐⭐⭐⭐   | Complex orchestration, enterprise |
-| App Runner           | ⭐⭐⭐⭐⭐       | ⭐                   | ⭐⭐⭐⭐        | ⭐⭐⭐   | ⭐⭐      | Simple containerized apps         |
+| Method               | Ease of Use | Management Overhead | Scalability | Cost       | Control    | Best For                          |
+| -------------------- | ----------- | ------------------- | ----------- | ---------- | ---------- | --------------------------------- |
+| Elastic Beanstalk    | ⭐⭐⭐⭐⭐  | ⭐⭐                | ⭐⭐⭐⭐    | ⭐⭐⭐     | ⭐⭐⭐     | Quick deployment, prototypes      |
+| Lambda + API Gateway | ⭐⭐⭐⭐    | ⭐                  | ⭐⭐⭐⭐⭐  | ⭐⭐⭐⭐⭐ | ⭐⭐       | Variable traffic, microservices   |
+| EC2                  | ⭐⭐⭐      | ⭐⭐⭐⭐⭐          | ⭐⭐⭐⭐    | ⭐⭐⭐     | ⭐⭐⭐⭐⭐ | Custom requirements, legacy apps  |
+| ECS/Fargate          | ⭐⭐⭐      | ⭐⭐                | ⭐⭐⭐⭐⭐  | ⭐⭐⭐     | ⭐⭐⭐⭐   | Containerized apps, microservices |
+| EKS                  | ⭐⭐        | ⭐⭐⭐⭐⭐          | ⭐⭐⭐⭐⭐  | ⭐⭐       | ⭐⭐⭐⭐⭐ | Complex orchestration, enterprise |
+| App Runner           | ⭐⭐⭐⭐⭐  | ⭐                  | ⭐⭐⭐⭐    | ⭐⭐⭐     | ⭐⭐       | Simple containerized apps         |
 
 ## My Recommendation: ECS/Fargate
 
 After working with various AWS services for over 3 years and deploying multiple Node.js applications, I recommend **ECS with Fargate** for most scenarios because:
 
 **✅ Sweet Spot Benefits:**
+
 - **Container-Native**: Leverages Docker for consistent deployments across environments
 - **Serverless Infrastructure**: No EC2 instance management while retaining container benefits
 - **AWS Integration**: Seamless integration with ALB, RDS, ElastiCache, and other AWS services
@@ -221,6 +232,7 @@ After working with various AWS services for over 3 years and deploying multiple 
 - **Cost-Effective**: Reasonable pricing for most production workloads
 
 **🎯 Perfect For:**
+
 - Production Node.js APIs and microservices
 - Teams comfortable with Docker containerization
 - Applications requiring consistent performance
@@ -237,6 +249,7 @@ The following diagram shows my recommended ECS/Fargate deployment architecture:
 The right deployment method depends on your specific needs, team expertise, and project requirements. Start with your constraints (budget, timeline, team skills) and work backward to the solution that best fits.
 
 For most Node.js applications, I'd recommend this progression:
+
 1. **Prototype**: Start with Elastic Beanstalk or App Runner
 2. **Production**: Move to ECS/Fargate for reliability and scalability
 3. **Scale**: Consider Lambda for specific microservices or EKS for complex orchestration

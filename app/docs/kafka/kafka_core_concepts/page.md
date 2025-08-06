@@ -24,7 +24,7 @@ Topics are broken down into **partitions**. Each partition is an ordered, immuta
 
 The number of partitions for a topic is defined at the time of topic creation and numbered starting from 0 to N-1, where N is the total number of partitions.
 
-If a topic has more than one partition, kafka guarantees the order of messages within a partition, but not across partitions. 
+If a topic has more than one partition, kafka guarantees the order of messages within a partition, but not across partitions.
 
 ### Offset
 
@@ -39,6 +39,7 @@ Applications that send data into topics are called **Kafka producers**.
 A Kafka producer sends messages to a topic and messages are distributed across the topic's partitions according to a mechanism such as key hashing or round-robin.
 
 For a message to be successfully written into a Kafka topic, the producer must specify a level of acknowledgment (ack):
+
 - `acks=0`: The producer does not wait for any acknowledgment from the broker.
 - `acks=1`: The producer waits for an acknowledgment from the leader broker of the partition.
 - `acks=all`: The producer waits for acknowledgments from all partition replicas.
@@ -46,6 +47,7 @@ For a message to be successfully written into a Kafka topic, the producer must s
 ### Message Key
 
 Each event message contains an optional key and a value:
+
 - If the key is not specified, the message is sent in a round-robin fashion to the partitions of the topic.
 - If the key is specified, the message is sent to the partition determined by hashing the key; all messages with the same key will go to the same partition, ensuring that they are processed in order.
 - A key can be anything to identify a message - a string, a number, or even a complex object serialized to a byte array.
@@ -86,6 +88,7 @@ The serialization and deserialization format of a topic must not change during t
 ### Consumer Groups
 
 A consumer group is a group of consumers that work together to consume messages from one or more topics. Each consumer in the group reads from a unique set of partitions, allowing for parallel processing of messages:
+
 - All consumers in a group share the same group ID.
 - A consumer can consume from multiple partitions, but each partition can only be consumed by one consumer in the group at a time.
 - If a consumer fails or is removed from the group, Kafka will rebalance and assign its partitions to other consumers in the group.
@@ -95,9 +98,10 @@ A consumer group is a group of consumers that work together to consume messages 
 
 Consumers regularly commit the latest processed message, also known as the **consumer offset**, to Kafka. This process is not done for every message consumed (this would be inefficient), and instead is a periodic process.
 
-Kafka brokers use an internal topic called `__consumer_offsets` to store the offsets of messages that have been consumed by each consumer group. 
+Kafka brokers use an internal topic called `__consumer_offsets` to store the offsets of messages that have been consumed by each consumer group.
 
 This allows consumers to resume reading from the last committed offset in case of:
+
 - Kafka client crashes
 - A rebalance occurs
 - New Consumer joins the group
@@ -105,15 +109,18 @@ This allows consumers to resume reading from the last committed offset in case o
 ### Delivery semantics for consumers
 
 At Most once:
+
 - Offsets are committed as soon as the message is received
 - if the processing goes wrong, the message is lost (it won't be read again)
 
 At Least once (usually preferred):
+
 - Offsets are committed after the message is processed
 - If the processing goes wrong, the message will be read again (it may be processed multiple times)
 - This can lead to duplicate processing, so the application must handle idempotency.
 
 Exactly once:
+
 - This can be achieved for Kafka topics to Kafka topics workflows using the transactional API.
 - For Kafka topics to external system workflows, to effectively achieve exactly once semantics, you must use an idempotent consumer.
 
@@ -128,6 +135,7 @@ An ensemble of Kafka brokers working together is called a **Kafka cluster**. A b
 If there are multiple brokers in a cluster, then partitions for a given topic will be distributed among the brokers evenly to achieve load balancing and scalability.
 
 Every broker in the cluster has metadata about all other brokers:
+
 - any broker in the cluster is also called a bootstrap server
 - a client can connect to any broker in the cluster to get the metadata about the cluster
 

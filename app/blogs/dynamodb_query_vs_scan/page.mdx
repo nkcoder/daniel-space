@@ -1,5 +1,5 @@
 ---
-title: "Query vs Scan in DynamoDB"
+title: 'Query vs Scan in DynamoDB'
 description: Understanding the differences between Query and Scan operations in DynamoDB - performance, use cases, and best practices for efficient data retrieval
 date: 2025-07-24
 tags: [aws]
@@ -41,22 +41,22 @@ TypeScript query:
 
 ```ts
 // Create the DynamoDB client
-const ddbClient = new DynamoDBClient({ region: "us-west-2" });
+const ddbClient = new DynamoDBClient({ region: 'us-west-2' });
 const documentClient = DynamoDBDocumentClient.from(ddbClient);
 
 async function queryUsersByType(type: string) {
   const command = new QueryCommand({
-    TableName: "Users",
-    IndexName: "type_index",
-    KeyConditionExpression: "type = :type",
-    ExpressionAttributeValues: { ":type": type },
+    TableName: 'Users',
+    IndexName: 'type_index',
+    KeyConditionExpression: 'type = :type',
+    ExpressionAttributeValues: { ':type': type }
   });
 
   const response = await documentClient.send(command);
   return response.Items;
 }
 
-queryUsersByType("admin").then(console.log).catch(console.error);
+queryUsersByType('admin').then(console.log).catch(console.error);
 ```
 
 ## Scan
@@ -73,68 +73,70 @@ Performance: Less efficient for large tables as it examines every item, consumin
 ### Scan on table vs Scan on index
 
 **Data examined**:
+
 - Scan table: Reads all items with all attributes from the main table
 - Scan index: Only reads the projected attributes defined in the GSI (typically just the key attributes plus any projected attributes)
 
 **Size**:
+
 - Scan table: Processes the full dataset
 - Scan index: Processes a subset of data (only projected attributes), so generally smaller and faster
 
 **Attributes available**:
+
 - Scan table: All item attributes are available
 - Scan index: Only projected attributes are available (you might need to do additional queries to get full item details)
 
 Use case example: If you want to find all members regardless of type but only need their type and createdAt, scanning the GSI would be more efficient than scanning the main table since you're working with less data per item.
 The GSI scan is essentially a more efficient way to examine all items when you only need the projected attributes, while the table scan gives you complete item data but at a higher cost.
 
-
 Scan on table example (TypeScript):
 
 ```ts
 // Scan on the table
-const ddbClient = new DynamoDBClient({ region: "us-west-2" });
+const ddbClient = new DynamoDBClient({ region: 'us-west-2' });
 const documentClient = DynamoDBDocumentClient.from(ddbClient);
 
 async function scanUsersByType(type: string) {
   const command = new ScanCommand({
-    TableName: "Users",
-    FilterExpression: "#type = :type",
+    TableName: 'Users',
+    FilterExpression: '#type = :type',
     LIMIT: 100, // optional
-    ProjectionExpression: "id, #type, #name, email", // optional
-    ExpressionAttributeValues: { ":type": type },
-    ExpressionAttributeNames: { "#type": "type", "#name": "name" }, // name and type are reserved words
+    ProjectionExpression: 'id, #type, #name, email', // optional
+    ExpressionAttributeValues: { ':type': type },
+    ExpressionAttributeNames: { '#type': 'type', '#name': 'name' } // name and type are reserved words
   });
 
   const response = await documentClient.send(command);
   return response.Items;
 }
 
-scanUsersByType("admin").then(console.log).catch(console.error);
+scanUsersByType('admin').then(console.log).catch(console.error);
 ```
 
 Scan on index example (TypeScript):
 
 ```ts
 // Scan on the index
-const ddbClient = new DynamoDBClient({ region: "us-west-2" });
+const ddbClient = new DynamoDBClient({ region: 'us-west-2' });
 const documentClient = DynamoDBDocumentClient.from(ddbClient);
 
 async function scanUsersByType(type: string) {
   const command = new ScanCommand({
-    TableName: "Users",
-    IndexName: "type_index",
-    FilterExpression: "#type = :type",
+    TableName: 'Users',
+    IndexName: 'type_index',
+    FilterExpression: '#type = :type',
     LIMIT: 100, // optional
-    ProjectionExpression: "id, #type, #name, email", // limited to projected attributes of the index only
-    ExpressionAttributeValues: { ":type": type },
-    ExpressionAttributeNames: { "#type": "type", "#name": "name" }, // name and type are reserved words
+    ProjectionExpression: 'id, #type, #name, email', // limited to projected attributes of the index only
+    ExpressionAttributeValues: { ':type': type },
+    ExpressionAttributeNames: { '#type': 'type', '#name': 'name' } // name and type are reserved words
   });
 
   const response = await documentClient.send(command);
   return response.Items;
 }
 
-scanUsersByType("admin").then(console.log).catch(console.error);
+scanUsersByType('admin').then(console.log).catch(console.error);
 ```
 
 ## Summary
@@ -145,4 +147,4 @@ scanUsersByType("admin").then(console.log).catch(console.error);
 - Always consider your access patterns, using indexes effectively can help you avoid the need for scans
 - Consider the use of projections to limit the amount of data returned by your queries and scans, which can help reduce costs and improve performance.
 
-![dynamodb-query-vs-scan](./dynamodb-query-scan.png) 
+![dynamodb-query-vs-scan](./dynamodb-query-scan.png)

@@ -32,6 +32,7 @@ time.Sleep(10 * time.Second)
 ```
 
 **time.After()**
+
 - Also blocks the current goroutine until the duration elapses.
 - Returns a channel that receives a value after the duration.
 - Can be used in a `select` statement, allowing you to wait for multiple events (timeouts, other channels, etc.).
@@ -54,6 +55,7 @@ case msg := <-someChannel:
 ```
 
 **Summary**
+
 - Both block the goroutine if used as above.
 - `<-time.After(...)` is more flexible and idiomatic in concurrent Go code, especially when you need to wait for either a timeout or another event.
 - `time.Sleep(...)` is simpler for just pausing execution.

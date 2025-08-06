@@ -1,6 +1,6 @@
 ---
-title: "S3 Transfer Acceleration vs Direct Connect"
-description: "Comparison of AWS data transfer solutions including S3 Transfer Acceleration, Direct Connect, VPN, and Snow family services for different use cases."
+title: 'S3 Transfer Acceleration vs Direct Connect'
+description: 'Comparison of AWS data transfer solutions including S3 Transfer Acceleration, Direct Connect, VPN, and Snow family services for different use cases.'
 ---
 
 # S3 Transfer Acceleration vs Direct Connect
@@ -25,24 +25,24 @@ When it comes to transferring data to and from AWS, there are several options av
 - Client VPN: enables you to securely connect users to on-premises network or AWS
 - Utilizes IPSe to establish **encrypted network connectivity** between your intranet and AWS VPC **over the Internet**.
 
-##  AWS Snowball
+## AWS Snowball
 
 - petabyte-scale data transport solution that uses secure appliances to transfer large amount data into and out of AWS
 - a good choice if:
-    - you need to more securely and quickly transfer terabytes to many petabytes of data to AWS
-    - if you don't want to make expensive upgrades to your network infrastructure
-    - if you frequently experience large backlogs of data
-    - if you're located in a physically isolated environment
-    - if you're in an area where high-bandwidth Internet connections are not available or cost-prohibitive
+  - you need to more securely and quickly transfer terabytes to many petabytes of data to AWS
+  - if you don't want to make expensive upgrades to your network infrastructure
+  - if you frequently experience large backlogs of data
+  - if you're located in a physically isolated environment
+  - if you're in an area where high-bandwidth Internet connections are not available or cost-prohibitive
 - As a rule of thumb, if it takes more than one week to upload your data to AWS using the spare capacity of your existing Internet connection, then you should consider using Snow.
-    - For 100 Mbps connection, to transfer 100TB, you need more than 100 days.
+  - For 100 Mbps connection, to transfer 100TB, you need more than 100 days.
 
 ## AWS Snowball Edge
 
 - A type of Snowball device with on-board storage and compute power for select AWS capabilities
 - It can process data locally, run edge-computing workload, and transfer data to or from the AWS Cloud
 - It can transfer data at speeds faster than the Internet by shipping the data in the devices through a regional carrier.
-- Two options for device configurations: *Storage Optimized* and *Compute Optimized*.
+- Two options for device configurations: _Storage Optimized_ and _Compute Optimized_.
 - Shipping: it make take up to 4 weeks to provision and prepare the device for your job before it is shipped (1 day or 2 days shipping).
 
 ## AWS Snowmobile

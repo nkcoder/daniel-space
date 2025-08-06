@@ -15,34 +15,35 @@ description: Learn about AWS CloudFront in AWS
   - also known as geo blocking, to prevent users in specific geographic locations from accessing content that you're distributing
   - you can `allow` or `block` specific geographic locations, but you cannot route traffic based on the geographic location of the user which can be achieved by Route 53 geolocation routing policy
 - CloudFront Origin Shield
-	- an additional layer in the CloudFront caching infrastructure that helps to minimise your origin's load, improve its availability and reduce it's operating costs
-	- better cache hit ratio
-	- reduced origin load
-	- better network performance
+  - an additional layer in the CloudFront caching infrastructure that helps to minimise your origin's load, improve its availability and reduce it's operating costs
+  - better cache hit ratio
+  - reduced origin load
+  - better network performance
 
 ## How to serve private content?
 
 - Recommended: require your users to access your content only through CloudFront
 - Specify the **trusted key groups** or **trusted signers** that you want to use to create signed URLs or signed cookies. Trusted key groups is recommended.
-	- create public/private key pair, add to CloudFront key groups
-	- add the signer (key group) to the distribution (Behaviours => Restrict Viewer Access)
-- Choose *Signed URLs* if
-    - you need t restrict access to individual files
-    - the number of resources requiring access control is limited
-    - you prefer to control access via unique URLs, which can be easily distributed or embedded
-    - you want tighter control over each resource's access parameters
-- Choose *Signed Cookies* if:
-    - you need to grant access to multiple restricted resources within a user session
-    - managing a large number of signed URLs would be impractical
-    - you application serves complex web pages with numerous assets that need protection
-    - you prefer leveraging browser-managed cookies for seamless access across multiple requests
-    - you don't want to change your current URLs
+  - create public/private key pair, add to CloudFront key groups
+  - add the signer (key group) to the distribution (Behaviours => Restrict Viewer Access)
+- Choose _Signed URLs_ if
+  - you need t restrict access to individual files
+  - the number of resources requiring access control is limited
+  - you prefer to control access via unique URLs, which can be easily distributed or embedded
+  - you want tighter control over each resource's access parameters
+- Choose _Signed Cookies_ if:
+  - you need to grant access to multiple restricted resources within a user session
+  - managing a large number of signed URLs would be impractical
+  - you application serves complex web pages with numerous assets that need protection
+  - you prefer leveraging browser-managed cookies for seamless access across multiple requests
+  - you don't want to change your current URLs
 - Create an Origin Access Control (OAC) in CloudFront
-	- give the OAC permission to access the S3 bucket
-	- create an OAC
-	- update the **Origin Access** of the origin to use *Origin access control settings (recommended)*
+  - give the OAC permission to access the S3 bucket
+  - create an OAC
+  - update the **Origin Access** of the origin to use _Origin access control settings (recommended)_
 
 **OAC vs OAI**:
+
 - OAC: Origin Access Control, helps secure your origins, supports:
   - all S3 buckets in all regions
   - S3 SSE-KMS
@@ -54,11 +55,11 @@ description: Learn about AWS CloudFront in AWS
 - Lambda@Edge is a an extension of AWS Lambda, a compute service that lets you execute functions that customise the content that CloudFront delivers
 - Processing requests at AWS locations closer to the viewer instead of on origin servers significantly reduces latency and improves the user experience
 - CloudFront intercepts requests and responses at CloudFront edge locations, you can execute Lambda functions when the following CloudFront events occur:
-    - When CloudFront receives a request from a viewer (viewer request)
-    - Before CloudFront forwards a request to the origin (origin request)
-    - When CloudFront receives a response from the origin (origin response)
-    - Before CloudFront returns the response to the viewer (viewer response)
+  - When CloudFront receives a request from a viewer (viewer request)
+  - Before CloudFront forwards a request to the origin (origin request)
+  - When CloudFront receives a response from the origin (origin response)
+  - Before CloudFront returns the response to the viewer (viewer response)
 - Use cases
-    - inspect cookies and rewrite URLs so that users see different versions of a site for A/B testing
-    - inspect headers or authorization tokens, and insert a header to control access to your content before CloudFront forwards the request to your origin
-    - make network calls to external resources to confirm user credentials, or fetch additional content to customize a response.
+  - inspect cookies and rewrite URLs so that users see different versions of a site for A/B testing
+  - inspect headers or authorization tokens, and insert a header to control access to your content before CloudFront forwards the request to your origin
+  - make network calls to external resources to confirm user credentials, or fetch additional content to customize a response.

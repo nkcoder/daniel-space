@@ -6,36 +6,36 @@ description: Learn about AWS Health Dashboard in AWS
 # AWS Health Dashboard
 
 - AWS Health provides ongoing visibility into your resource performance and the availability of your AWS services and accounts.
-- You can use AWS Health _events_ to learn how service and resource changes might affect your applications running on AWS.
-- AWS Health provides relevant and timely information to help you manage events in progress. AWS Health also helps you be aware of and to prepare for planned activities. 
+- You can use AWS Health *events* to learn how service and resource changes might affect your applications running on AWS.
+- AWS Health provides relevant and timely information to help you manage events in progress. AWS Health also helps you be aware of and to prepare for planned activities.
 
 ## AWS Health Events
 
 - AWS Health events, also known as Health events, are notifications that AWS Health sends on behalf of other AWS services. You can use these events to learn about upcoming or scheduled changes that might affect your account.
-    - For example, AWS Health can send an event if AWS Identity and Access Management (IAM) plans to deprecate a managed policy or AWS Config plans to deprecate a managed rule.
+  - For example, AWS Health can send an event if AWS Identity and Access Management (IAM) plans to deprecate a managed policy or AWS Config plans to deprecate a managed rule.
 - AWS Health also sends events when there are service availability issues in an AWS Region. You can review the event description to understand the issue, identify any affected resources, and take any recommended actions.
 
 - **Types of Health events:**
-    - Account-specific event
-        - Account-specific events are local to either your AWS account or an account in your AWS organization.
-        - For example, if there's an issue with an Amazon Elastic Compute Cloud (Amazon EC2) instance type in a Region that you use, AWS Health provides information about the event and the name of the affected resources.
-    - Public event
-        - Public events are reported service events that aren't specific to an account.
-        - For example, if there's a service issue for Amazon Simple Storage Service (Amazon S3) in the US East (Ohio) Region, AWS Health provides information about the event, even if you don't use that service or have S3 buckets in that Region.
+  - Account-specific event
+    - Account-specific events are local to either your AWS account or an account in your AWS organization.
+    - For example, if there's an issue with an Amazon Elastic Compute Cloud (Amazon EC2) instance type in a Region that you use, AWS Health provides information about the event and the name of the affected resources.
+  - Public event
+    - Public events are reported service events that aren't specific to an account.
+    - For example, if there's a service issue for Amazon Simple Storage Service (Amazon S3) in the US East (Ohio) Region, AWS Health provides information about the event, even if you don't use that service or have S3 buckets in that Region.
 
 ## AWS Health Dashboard
 
 - Service health
-    - View the current and historical status of all AWS services, you can filter by service, region and time period
+  - View the current and historical status of all AWS services, you can filter by service, region and time period
 - Account health
-    - Stay informed of important events affecting your AWS resources.
-    - Open and recent issues
-    - Scheduled changes
-        - Example: ElasticContainerRegistry planned lifecycle event (Starting October 1, 2025, the previous version of ECR basic scanning will not be supported.)
-    - Other notifications
-    - Event log
+  - Stay informed of important events affecting your AWS resources.
+  - Open and recent issues
+  - Scheduled changes
+    - Example: ElasticContainerRegistry planned lifecycle event (Starting October 1, 2025, the previous version of ECR basic scanning will not be supported.)
+  - Other notifications
+  - Event log
 - Organization health
-    - Aggregate your Health events from all member AWS accounts in your AWS organization. 
-    - This provides a centralized view for all events, such as operational issues, scheduled maintenance, and account notifications.
+  - Aggregate your Health events from all member AWS accounts in your AWS organization.
+  - This provides a centralized view for all events, such as operational issues, scheduled maintenance, and account notifications.
 - Health Integrations with EventBridge
-    - Collect, filter, and deliver health events from AWS services. You don't need to write custom code or manage and deploy servers.
+  - Collect, filter, and deliver health events from AWS services. You don't need to write custom code or manage and deploy servers.

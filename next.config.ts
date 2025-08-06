@@ -1,4 +1,4 @@
-import nextra from "nextra";
+import nextra from 'nextra';
 
 // nextra-specific options
 const withNextra = nextra({

@@ -5,33 +5,40 @@ description: Overview of Amazon EKS, its architecture, and how it integrates wit
 
 At its core, Amazon EKS is a managed Kubernetes service that makes it easier to run Kubernetes on AWS without needing to install, operate, and maintain your own Kubernetes control plane. Think of it as AWS taking care of the complex "plumbing" of Kubernetes while you focus on running your applications.
 
-## The Control Plane 
+## The Control Plane
+
 Amazon EKS automatically manages the availability and scalability of the Kubernetes control plane nodes that are responsible for scheduling containers, managing application availability, storing cluster data, and other key orchestration tasks. It runs the control plane across multiple Availability Zones to ensure high availability. This means if one zone fails, your cluster remains operational.
 
-## Worker Node Management 
+## Worker Node Management
+
 For the worker nodes (where your applications actually run), EKS provides several options. You can use:
+
 1. Amazon EC2 instances that you manage yourself
 2. AWS Fargate for serverless container deployment
 3. Amazon EC2 Spot Instances for cost optimization
 
-## Integration with AWS Services 
+## Integration with AWS Services
+
 One of EKS's strongest features is its deep integration with other AWS services. For example:
+
 - It works seamlessly with AWS IAM for authentication and authorization
 - It integrates with Amazon VPC for networking
 - It connects with AWS Load Balancers for traffic distribution
 - It works with AWS CloudWatch for monitoring and logging
 - It supports AWS CloudTrail for audit logging
 
-## Security Features 
+## Security Features
+
 Security is built into EKS at multiple levels. The service automatically:
 
 - Patches the Kubernetes control plane for security vulnerabilities
 - Provides encrypted communication between the control plane and worker nodes
 - Integrates with AWS KMS for secrets encryption
-    - Enabling `Secrest encryption` allow you to AWS KMS keys to provide envelope encryption of Kubernetes secrets stored in **etcd** for your cluster. (not using Secrets Manager for credentials)
+  - Enabling `Secrest encryption` allow you to AWS KMS keys to provide envelope encryption of Kubernetes secrets stored in **etcd** for your cluster. (not using Secrets Manager for credentials)
 - Supports pod security policies and network policies
 
-## Networking Capabilities 
+## Networking Capabilities
+
 EKS offers sophisticated networking features through the Amazon VPC CNI plugin. This enables:
 
 - Native VPC networking for pods
@@ -39,7 +46,8 @@ EKS offers sophisticated networking features through the Amazon VPC CNI plugin. 
 - Support for different networking modes including IPv4 and IPv6
 - Custom networking configurations for complex requirements
 
-## Scaling and Updates 
+## Scaling and Updates
+
 The service handles scaling and updates intelligently:
 
 - Automatic scaling of the control plane based on demand

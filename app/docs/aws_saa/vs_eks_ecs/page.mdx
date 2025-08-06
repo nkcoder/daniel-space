@@ -1,6 +1,6 @@
 ---
-title: "EKS vs ECS"
-description: "Comparison between AWS EKS and ECS container orchestration services, covering core concepts, similarities, differences, and use cases."
+title: 'EKS vs ECS'
+description: 'Comparison between AWS EKS and ECS container orchestration services, covering core concepts, similarities, differences, and use cases.'
 ---
 
 # EKS vs ECS
@@ -45,33 +45,33 @@ Both **AWS EKS** and **AWS ECS** are container orchestration services provided b
 ## When to Use AWS EKS
 
 - **Use Cases:**
-    - You need Kubernetes-specific features like custom schedulers, CRDs (Custom Resource Definitions), or advanced networking.
-    - You are running Kubernetes in a multi-cloud or hybrid environment and want to use a consistent platform across clouds.
-    - Your team already has expertise in Kubernetes and wants access to the broader Kubernetes ecosystem (e.g., Helm charts, Istio, etc.).
-    - You have complex workloads that benefit from Kubernetes features like namespaces, custom controllers, and fine-grained resource management.
+  - You need Kubernetes-specific features like custom schedulers, CRDs (Custom Resource Definitions), or advanced networking.
+  - You are running Kubernetes in a multi-cloud or hybrid environment and want to use a consistent platform across clouds.
+  - Your team already has expertise in Kubernetes and wants access to the broader Kubernetes ecosystem (e.g., Helm charts, Istio, etc.).
+  - You have complex workloads that benefit from Kubernetes features like namespaces, custom controllers, and fine-grained resource management.
 
 - **Pros:**
-    - Kubernetes is an industry standard, making workloads portable.
-    - Access to a large ecosystem of Kubernetes tools.
-    - Ideal for hybrid or multi-cloud architectures.
+  - Kubernetes is an industry standard, making workloads portable.
+  - Access to a large ecosystem of Kubernetes tools.
+  - Ideal for hybrid or multi-cloud architectures.
 
 - **Cons:**
-    - Higher operational complexity (you need to manage Kubernetes concepts like Pods, Services, Deployments, etc.).
-    - Additional cost for the EKS control plane.
+  - Higher operational complexity (you need to manage Kubernetes concepts like Pods, Services, Deployments, etc.).
+  - Additional cost for the EKS control plane.
 
 ## When to Use AWS ECS
 
 - **Use Cases:**
-    - You want a simple, tightly integrated AWS-native solution for container orchestration.
-    - You are running workloads exclusively on AWS and do not need Kubernetes-specific features.
-    - You have a team without Kubernetes experience and need a straightforward container orchestration platform.
-    - You prefer a managed solution with minimal operational overhead.
+  - You want a simple, tightly integrated AWS-native solution for container orchestration.
+  - You are running workloads exclusively on AWS and do not need Kubernetes-specific features.
+  - You have a team without Kubernetes experience and need a straightforward container orchestration platform.
+  - You prefer a managed solution with minimal operational overhead.
 
 - **Pros:**
-    - Simple setup and operation.
-    - No additional cost for the control plane.
-    - Seamless integration with other AWS services.
+  - Simple setup and operation.
+  - No additional cost for the control plane.
+  - Seamless integration with other AWS services.
 
 - **Cons:**
-    - Vendor lock-in (ECS is AWS-only).
-    - Limited flexibility and ecosystem compared to Kubernetes.
+  - Vendor lock-in (ECS is AWS-only).
+  - Limited flexibility and ecosystem compared to Kubernetes.

@@ -1,7 +1,8 @@
 ---
-title: "Aurora"
-description: "AWS Aurora database service - a cloud-optimized relational database that supports both PostgreSQL and MySQL with high availability and performance."
+title: 'Aurora'
+description: 'AWS Aurora database service - a cloud-optimized relational database that supports both PostgreSQL and MySQL with high availability and performance.'
 ---
+
 ## Aurora
 
 - AWS proprietary database, not open source
@@ -23,11 +24,11 @@ description: "AWS Aurora database service - a cloud-optimized relational databas
   - support for cross-region replication
   - read replicas auto scaling
   - when you add a reader, it will be in the same region as the source database
-  
+
 ## Aurora Global Database
 
 - An Aurora global database has a primary DB cluster in one Region, and up to five secondary DB clusters in different Regions. Aurora automatically synchronises all changes made in the primary DB cluster to one or more secondary clusters.
-- designed for globally distributed applications, allowing a single Aurora database to span multiple AWS regions. 
+- designed for globally distributed applications, allowing a single Aurora database to span multiple AWS regions.
 - it replicates your data with no impact on database performance, enables fast local reads with low latency in each Region, and provides disaster recovery from Region-wide outages.
 - primary region: master (read/write), replicas (read); secondary regions: only read
 - cross region replication takes less than 1 second (RPO 1 second)
@@ -37,13 +38,12 @@ description: "AWS Aurora database service - a cloud-optimized relational databas
   - Scalable secondary Aurora DB clusters
   - Fast replication from primary to secondary Aurora DB clusters
   - Recovery from Region-wide outages
-  
 - **limitations**:
   - Aurora Global Database is available in certain AWS Regions and for specific Aurora MySQL and Aurora PostgreSQL versions
   - Doesn't support Aurora Auto Scaling for secondary DB clusters
   - You can perform managed cross-Region switchovers or failovers with Aurora Global Database only if the primary and secondary DB clusters have the same major and minor engine versions
   - You can't stop or start the Aurora DB clusters in your global database individually
-    
+
 ## Aurora database clone
 
 - create a new database cluster from an existing one

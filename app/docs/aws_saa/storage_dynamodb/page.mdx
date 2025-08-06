@@ -1,10 +1,12 @@
 ---
-title: "DynamoDB"
-description: "AWS DynamoDB - a fully managed NoSQL database service with global tables, flexible capacity modes, and built-in security features."
+title: 'DynamoDB'
+description: 'AWS DynamoDB - a fully managed NoSQL database service with global tables, flexible capacity modes, and built-in security features.'
 ---
+
 ## Global tables
 
 Amazon DynamoDB global tables are a fully managed, multi-Region, and multi-active database option that delivers fast and localized read and write performance for massively scaled global applications.
+
 - replicate your DynamoDB tables automatically across your regions
 - eliminate the difficult work of replicating data between regions and resolve update conflicts
 - ideal for massively scaled applications with globally dispersed users
@@ -12,7 +14,7 @@ Amazon DynamoDB global tables are a fully managed, multi-Region, and multi-activ
 ## Capacity mode
 
 - **Provisioned**: manage and optimise your costs by allocating read/write capacity in advance
-  - auto scaling: 
+  - auto scaling:
     - dynamically adjusts provisioned throughput capacity on your behalf in response to actual traffic patterns
     - you specify the minimum and maximum capacity units and target utilisation
 - **On-demand**: Simplify billing by paying for the actual reads and writes your application performs
@@ -22,7 +24,6 @@ Amazon DynamoDB global tables are a fully managed, multi-Region, and multi-activ
 - PITR (Point-in-time recovery)
   - provides continuous backups of your DynamoDB data for 35 days to help protect against accidental write or delete operations
   - provides up to 35 days of recovery points at a per second granularity
-  
 - On demand backups
   - creates full backup of your table
   - cannot be copied to a different region or account
@@ -31,8 +32,9 @@ Amazon DynamoDB global tables are a fully managed, multi-Region, and multi-activ
   - makes it easy to centralise and automate data protection across AWS services, in the cloud and on premises
   - policy-base backup: you can create backup policies (backup plans) to define your backup requirements and then apply to the AWS resources
   - cross-account/cross-region backup: yoau can copy backups to different AWS regions/accounts on demand automatically as part of the backup plan
+
 ## DynamoDB Accelerator
 
-- Amazon DynamoDB Accelerator (DAX) is a fully managed, highly available caching service built for Amazon DynamoDB. DAX delivers up to a 10 times performance improvement—from milliseconds to microseconds—even at millions of requests per second. 
-- DAX does all the heavy lifting required to add in-memory acceleration to your DynamoDB tables, without requiring developers to manage cache invalidation, data population, or cluster management. 
+- Amazon DynamoDB Accelerator (DAX) is a fully managed, highly available caching service built for Amazon DynamoDB. DAX delivers up to a 10 times performance improvement—from milliseconds to microseconds—even at millions of requests per second.
+- DAX does all the heavy lifting required to add in-memory acceleration to your DynamoDB tables, without requiring developers to manage cache invalidation, data population, or cluster management.
 - As DAX is compatible with existing DynamoDB API calls, no application logic modification is required.

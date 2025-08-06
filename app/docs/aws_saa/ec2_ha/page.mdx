@@ -2,83 +2,84 @@
 title: AWS EC2 High Availability and Scalability
 description: Understanding high availability and scalability in Amazon EC2, including load balancing, auto scaling, and instance management.
 ---
+
 ### High Availability & Scalability for EC2
 
 - Vertical scaling: increase instance size (= scale up/down)
 - Horizontal scaling: increase number of instances (= scale out/in)
-    - auto scaling group
-    - load balancer
+  - auto scaling group
+  - load balancer
 
 - High availability: run instances for the same application across multi AZ
-    - auto scaling group - multi AZ
-    - load balance - multi AZ
+  - auto scaling group - multi AZ
+  - load balance - multi AZ
+
 ### Elastic Loading Balancing
 
 - Load balancers are servers that forward traffic to multiple downstream servers (EC2 instances)
 - Why use a load balancer
-    - spread load across multiple downstream instances
-    - expose a single point of access (DNS) to your application
-    - seamlessly handle failures of downstream instances
-    - do regular health checks to your instances
-    - provide SSL termination (HTTPS) for your websites
-    - enforce stickiness with cookies
-    - high availability across zones
-    - separate public traffic from private traffic
+  - spread load across multiple downstream instances
+  - expose a single point of access (DNS) to your application
+  - seamlessly handle failures of downstream instances
+  - do regular health checks to your instances
+  - provide SSL termination (HTTPS) for your websites
+  - enforce stickiness with cookies
+  - high availability across zones
+  - separate public traffic from private traffic
 
 - ELB: Sticky Session (Session Affinity)
-    - configured on Target Group (not the ELB)
-    - stickiness type
-        - Duration-based cookie (Load balancer generated cookie)
-        - Application-based cookie
-    - enable stickiness may bring imbalance to the load over the backend EC2 instances
+  - configured on Target Group (not the ELB)
+  - stickiness type
+    - Duration-based cookie (Load balancer generated cookie)
+    - Application-based cookie
+  - enable stickiness may bring imbalance to the load over the backend EC2 instances
 
 - ELB: cross zone load balancing
-    - the load balancer node distributes traffic across the registered targets in all enabled AZs
-    - Cross-zone load balancing is always on for Application Load Balancers. However, you can turn it off for a specific target group using target group attributes.
+  - the load balancer node distributes traffic across the registered targets in all enabled AZs
+  - Cross-zone load balancing is always on for Application Load Balancers. However, you can turn it off for a specific target group using target group attributes.
 
 - ELB: SSL/TLS
-    - an SSL certificate allows traffic between your clients and your load balancer to be encrypted in transit (in-flight encryption)
-    - SSL: Secure Sockets Layer, used to encrypt connections
-    - TLS: Transport Layer Security, which is a newer version
-    - nowadays, TLS certificates are mainly used, but SSL are still used
-    - public SSL certificates are issued by Certificate Authorities (CA)
-    - SNI: Server Name Indication
-        - solves the problem of loading multiple SSL certificates onto one web server to serve multiple websites
-        - it's a newer protocol and requires the client to indicate the hostname of the target server in the initial SSL handshake, the server will then find the correct certificate (or return the default one)
-        - only supports ALB and NLB
+  - an SSL certificate allows traffic between your clients and your load balancer to be encrypted in transit (in-flight encryption)
+  - SSL: Secure Sockets Layer, used to encrypt connections
+  - TLS: Transport Layer Security, which is a newer version
+  - nowadays, TLS certificates are mainly used, but SSL are still used
+  - public SSL certificates are issued by Certificate Authorities (CA)
+  - SNI: Server Name Indication
+    - solves the problem of loading multiple SSL certificates onto one web server to serve multiple websites
+    - it's a newer protocol and requires the client to indicate the hostname of the target server in the initial SSL handshake, the server will then find the correct certificate (or return the default one)
+    - only supports ALB and NLB
 
 - ELB: Deregistration delay (or connection draining, or draining interval)
-    - time to complete `in-flight requests` while the instance is de-registering or unhealthy
-    - stops sending new requests to the EC2 instance which is de-registering
-    - set to a low value if your requests are short
-    - configured on target group
+  - time to complete `in-flight requests` while the instance is de-registering or unhealthy
+  - stops sending new requests to the EC2 instance which is de-registering
+  - set to a low value if your requests are short
+  - configured on target group
+
 #### Application Load Balancer (ALB)
 
 - Operates at the request level (layer 7), handles HTTP, HTTPS and WebSocket traffic
 - Provide advanced routing features such as path-based routing, host-based routing and content-based routing
 - You cannot attach an Elastic IP to an Application Load Balancer
 - Use cases
-    - ideal for web applications that need complex routing, sticky sessions and SSL offloading
-    - suitable for micro-services architectures where routing based on URL paths or headers is required
-      
+  - ideal for web applications that need complex routing, sticky sessions and SSL offloading
+  - suitable for micro-services architectures where routing based on URL paths or headers is required
+
 #### Network Load Balancer (NLB)
-  
+
 - Layer 4, primarily handles TCP/UDP traffic and is suitable for extreme performance and low latency
 - Can handle millions of requests per second, making it highly performant and scalable
 - Routes connections based on IP address and port
 - Maintain a fixed IP address per AZ, supports assigning Elastic IP
 - You cannot associate Elastic IP to ALB, but you can associate Elastic IP to ELB in front of ALB (ALB is the target group of NLB).
 - Use cases:
-    - best for high-performance, low-latency applications, and workloads that need to handle TCP or UPD traffic
-    - useful when you need to maintain a static IP address, or **whitelisting** IPs or fixed IPs are required for compliance reasons
+  - best for high-performance, low-latency applications, and workloads that need to handle TCP or UPD traffic
+  - useful when you need to maintain a static IP address, or **whitelisting** IPs or fixed IPs are required for compliance reasons
 
 #### Gateway Load Balancer (GWLB)
 
 - Layer 3 (network layer) - IP packets
-- Deploy, scale and manage a fleet of 3rd party network virtual appliances in AWS, for example: 
-      - Firewall
-      - Intrusion Detection and Prevention Systems
-- Support protocols: HTTP1, HTTP2 and gRPC (configured in *Target Groups*)
+- Deploy, scale and manage a fleet of 3rd party network virtual appliances in AWS, for example: - Firewall - Intrusion Detection and Prevention Systems
+- Support protocols: HTTP1, HTTP2 and gRPC (configured in _Target Groups_)
 
 ### Auto Scaling Group
 
@@ -87,41 +88,42 @@ description: Understanding high availability and scalability in Amazon EC2, incl
 - Automatically register new instances to the load balancer
 - Re-create an EC2 instance in case a previous one is terminated
 - Can scale an ASG based on CloudWatch alarms
-    - metrics such as *Average CPU* are computed for the overall ASG instances
+  - metrics such as _Average CPU_ are computed for the overall ASG instances
 - Scaling policies
-    - dynamic scaling
-        - target tracking scaling
-            - simple to setup, can track CPU utilisation, network in/out, ALB request count per target
-            - example: I want to average ASG CPU to say at around 40%
-        - simple/step scaling
-            - when a CloudWatch alarm is triggered (for example CPU > 70%), then add 2 units
-            - when a CloudWatch alarm is triggered (for example CPU < 30%), then remove 1 units
-    - predictive scaling policies
-        - forecasts load based on your ASG's history
-        - can improve availability for applications whose workloads have predictable daily or weekly cycles
-        - as a best practice, consider using dynamic scaling and predictive scaling together
-            - dynamic scaling: make adjustments in response to real-time changes in a metric's value
-            - predictive scaling: make decisions about when to add capacity according to a metric's historical trends
-    - Scheduled actions
-        - schedule capacity ahead of anticipated load
-        - specify the minimum, maximum and desired size for the scaling action 
-    - **Note**: *predictive scaling policies* and *scheduled actions* are not available when you create the ASG, so you should add these two policies after the ASG is created.
+  - dynamic scaling
+    - target tracking scaling
+      - simple to setup, can track CPU utilisation, network in/out, ALB request count per target
+      - example: I want to average ASG CPU to say at around 40%
+    - simple/step scaling
+      - when a CloudWatch alarm is triggered (for example CPU > 70%), then add 2 units
+      - when a CloudWatch alarm is triggered (for example CPU < 30%), then remove 1 units
+  - predictive scaling policies
+    - forecasts load based on your ASG's history
+    - can improve availability for applications whose workloads have predictable daily or weekly cycles
+    - as a best practice, consider using dynamic scaling and predictive scaling together
+      - dynamic scaling: make adjustments in response to real-time changes in a metric's value
+      - predictive scaling: make decisions about when to add capacity according to a metric's historical trends
+  - Scheduled actions
+    - schedule capacity ahead of anticipated load
+    - specify the minimum, maximum and desired size for the scaling action
+  - **Note**: _predictive scaling policies_ and _scheduled actions_ are not available when you create the ASG, so you should add these two policies after the ASG is created.
 
 - After a scaling activity happens, you are in the cooldown period (default 300 seconds)
-    - this is the number of seconds to wait for a previous scaling activity to take effect
-    - during the cooldown period, the ASG will not launch or terminate additional instances (to allow for metrics to stabilise)
+  - this is the number of seconds to wait for a previous scaling activity to take effect
+  - during the cooldown period, the ASG will not launch or terminate additional instances (to allow for metrics to stabilise)
 
 - How EC2 chooses the instance to terminate during scale in? the order is:
-    - if there are instances in multiple Availability Zones, choose the Availability Zone with the most instances and at least one instance that is not protected from scale in
-    - choose the instance that uses the oldest launch template
-    - choose the instance that is closest to the next billing hour
-    - choose one at random
+  - if there are instances in multiple Availability Zones, choose the Availability Zone with the most instances and at least one instance that is not protected from scale in
+  - choose the instance that uses the oldest launch template
+  - choose the instance that is closest to the next billing hour
+  - choose one at random
 
-**Launch template**: EC2 only supports creating Auto Scaling groups with launch templates, you must first create a launch template that contains the configuration information to launch an instance, including: 
+**Launch template**: EC2 only supports creating Auto Scaling groups with launch templates, you must first create a launch template that contains the configuration information to launch an instance, including:
+
 - AMI
 - instance type
 - key pair
 - network settings: such as subnet, security group
 - storage: such as EBS volumes
 - when you modify a launch template, you're creating a new version, and you need to update the Auto Scaling group to use the new version
-You can only specify one launch template for an Auto Scaling group at a time, and you can't modify a launch template after you've created it. 
+  You can only specify one launch template for an Auto Scaling group at a time, and you can't modify a launch template after you've created it.

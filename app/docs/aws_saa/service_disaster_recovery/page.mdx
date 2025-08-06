@@ -6,6 +6,7 @@ description: Learn about Disaster recovery and migrations in AWS
 # Disaster recovery and migrations
 
 ## RPO and RTO
+
 - RPO: Recovery Point Objective
   - the maximum acceptable gap between the data in the disaster recovery site and the latest data stored in the application when the disaster strikes
   - between the disaster and RPO is the data loss
@@ -16,9 +17,10 @@ description: Learn about Disaster recovery and migrations in AWS
   - between the disaster and RTO is the downtime
 
 ## Disaster Recovery Strategies
-- backup and restore: 
+
+- backup and restore:
   - high RPO and high RTO
-- pilot light: 
+- pilot light:
   - a small version of the app (critical core) is always running in the cloud
   - very similar to backup and restore, but faster
   - lower RPO and lower RTO
@@ -31,6 +33,7 @@ description: Learn about Disaster recovery and migrations in AWS
   - very low RTO, but also very expensive
 
 ## Disaster Recovery tips
+
 - backup
   - EBS snapshots, RDS automated backups/snapshots
   - regular pushes to S3 / S3 IA / Glacier, lifecycle policy, cross region replication
@@ -52,7 +55,6 @@ description: Learn about Disaster recovery and migrations in AWS
 - on-premise => AWS, AWS => on-premise, AWS => AWS
 - CDC: Change Data Capture
 - need to create an EC2 instance to perform the replication tasks
-    - serverless replication: supports only a limited number of source and target endpoint engine type
+  - serverless replication: supports only a limited number of source and target endpoint engine type
 - SCT: Schema Conversion Tool
-    - used to convert database schema from one engine to another
-
+  - used to convert database schema from one engine to another

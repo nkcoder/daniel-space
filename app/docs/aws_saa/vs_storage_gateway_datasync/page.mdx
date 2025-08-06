@@ -1,6 +1,6 @@
 ---
-title: "Storage Gateway vs DataSync"
-description: "Comparison between AWS Storage Gateway and DataSync for hybrid cloud storage solutions and data transfer scenarios."
+title: 'Storage Gateway vs DataSync'
+description: 'Comparison between AWS Storage Gateway and DataSync for hybrid cloud storage solutions and data transfer scenarios.'
 ---
 
 # Storage Gateway vs DataSync
@@ -31,6 +31,7 @@ Use Cases:
 Purpose: AWS Storage Gateway is a hybrid cloud storage service that allows on-premises applications to seamlessly use AWS cloud storage. It provides a way to integrate your existing on-premises environment with AWS storage services.
 
 Key Features:
+
 - File Gateway: Provides file-based access (NFS, SMB) to Amazon S3, appearing as a local file system.
 - Volume Gateway: Presents cloud-backed iSCSI block storage volumes, storing backups as EBS snapshots or in Amazon S3.
 - Tape Gateway: Virtual tape library that works with your existing backup software to store data in Amazon S3 or Glacier.
@@ -55,4 +56,4 @@ Choosing Between DataSync and Storage Gateway:
 **Test**
 
 - You need to move historical data stored on an on-premises storage system to AWS, what's the best solution in terms of cost and operational management?
-- *Answer*: Use AWS DataSync to move the historical data from on-premises to AWS. Choose S3 Glacier Deep Archive as the destination.
+- _Answer_: Use AWS DataSync to move the historical data from on-premises to AWS. Choose S3 Glacier Deep Archive as the destination.

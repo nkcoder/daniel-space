@@ -1,5 +1,5 @@
 ---
-title: "Difference: SOAP vs REST vs GRAPHQL vs gRPC"
+title: 'Difference: SOAP vs REST vs GRAPHQL vs gRPC'
 description: Comprehensive comparison of API technologies - SOAP, REST, GraphQL, and gRPC with use cases, examples, and recommendations for modern applications
 date: 2025-07-05
 tags: [architecture]
@@ -13,6 +13,7 @@ SOAP (Simple Object Access Protocol): XML-based protocol with strict standards a
 **Characteristics**: Protocol-heavy, stateful operations supported, extensive tooling ecosystem.
 
 **Use cases**:
+
 - Enterprise applications requiring formal contracts (WSDL)
 - Financial services, healthcare, government systems
 - Systems needing built-in security (WS-Security)
@@ -21,18 +22,21 @@ SOAP (Simple Object Access Protocol): XML-based protocol with strict standards a
 **Current status**: Largely outdated for new projects, but still maintained in existing systems.
 
 **Why it's discouraged**:
+
 - Verbose XML overhead
 - Complex tooling requirements
 - Pool performance compared to modern alternatives
 - Limited browser support
 
 **Still used when**:
+
 - Working with legacy enterprise systems, financial institutions with existing SOAP infrastructure
-- When WS-* standards are contractually required.
+- When WS-\* standards are contractually required.
 
 **Example**:
 
 WSDL Definition (simplified):
+
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <definitions xmlns="http://schemas.xmlsoap.org/wsdl/"
@@ -47,6 +51,7 @@ WSDL Definition (simplified):
 ```
 
 Request:
+
 ```xml
 POST /user-service HTTP/1.1
 Content-Type: text/xml; charset=utf-8
@@ -63,6 +68,7 @@ SOAPAction: "GetUser"
 ```
 
 Response:
+
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
@@ -81,9 +87,10 @@ Response:
 ## REST
 
 **What it is**
-REST (Representational State Transfer):  Architecture style using HTTP methods with stateless, resource-based URLs.
+REST (Representational State Transfer): Architecture style using HTTP methods with stateless, resource-based URLs.
 
 **Use cases**:
+
 - Public APIs and web services
 - CRUD applications on resources
 - Mobile app backends
@@ -95,6 +102,7 @@ REST (Representational State Transfer):  Architecture style using HTTP methods w
 **Example**:
 
 API design:
+
 ```
 GET    /users/123           # Get user
 POST   /users               # Create user
@@ -103,6 +111,7 @@ DELETE /users/123           # Delete user
 ```
 
 Request:
+
 ```
 httpGET /users/123 HTTP/1.1
 Host: api.example.com
@@ -110,6 +119,7 @@ Accept: application/json
 ```
 
 Response:
+
 ```json
 {
   "id": 123,
@@ -126,6 +136,7 @@ Response:
 **Characteristics**: Single endpoint, client-specified queries, strong typed schema, real-time capabilities.
 
 **Use cases**:
+
 - Frontend-driven applications with varying data requirements
 - Mobile aps needing efficient data fetching
 - APIs serving multiple client types
@@ -134,12 +145,14 @@ Response:
 **Current status**: Strongly growing adoption. Use with care in write-heavy or streaming scenarios due to complexity and cache challenges.
 
 **Considerations**:
+
 - Adds complexity (caching, security, N+1 queries)
 - Overkill for simple CRUD APIs
 - Excellent for complex, data-driven frontends
 
 **Example**:
 Schema:
+
 ```graphql
 type User {
   id: ID!
@@ -162,6 +175,7 @@ type Query {
 ```
 
 Query:
+
 ```
 POST /graphql HTTP/1.1
 Content-Type: application/json
@@ -173,6 +187,7 @@ Content-Type: application/json
 ```
 
 Response:
+
 ```json
 {
   "data": {
@@ -180,10 +195,7 @@ Response:
       "id": "123",
       "name": "John Doe",
       "email": "john@example.com",
-      "posts": [
-        { "title": "My First Post" },
-        { "title": "GraphQL Tips" }
-      ]
+      "posts": [{ "title": "My First Post" }, { "title": "GraphQL Tips" }]
     }
   }
 }
@@ -195,6 +207,7 @@ Response:
 gRPC(Google Remote Procedure Call): High-performance RPC framework using Protocol Buffers and HTTP/2.
 
 **Use cases**:
+
 - Microservices communication
 - High-throughput, low-latency systems
 - Polyglot environments (multiple languages)
@@ -205,6 +218,7 @@ gRPC(Google Remote Procedure Call): High-performance RPC framework using Protoco
 **Current status**: Actively developed and increasingly adopted.
 
 **Considerations**:
+
 - Limited browser support (needs grpc-web)
 - Primarily for backend-to-backend communication
 - Excellent for microservices architectures
@@ -212,6 +226,7 @@ gRPC(Google Remote Procedure Call): High-performance RPC framework using Protoco
 **Example**:
 
 Protocol buffer definition:
+
 ```protobuf
 syntax = "proto3";
 
@@ -238,6 +253,7 @@ message ListUsersRequest {
 ```
 
 Client (TypeScript, generated):
+
 ```ts
 import { UserServiceClient } from './generated/user_grpc_pb';
 import { GetUserRequest } from './generated/user_pb';
@@ -262,20 +278,20 @@ client.getUser(request, (error, response) => {
 
 ## Differences Summary
 
-| **Feature**   | **SOAP**                      | **REST**                  | **GraphQL**                  | **gRPC**                        |
-|---------------|-------------------------------|---------------------------|------------------------------|----------------------------------|
-| **Protocol**   | Uses HTTP, SMTP, etc.         | HTTP                      | HTTP                         | HTTP/2                           |
-| **Data Format**| XML only                      | JSON, XML, etc.           | JSON (or custom)             | Protobuf (binary)               |
-| **Contract**   | WSDL (strongly typed)         | None (or OpenAPI/Swagger) | Strong schema (SDL)          | Strong schema (.proto)          |
-| **Flexibility**| Rigid                         | Moderate                  | Highly flexible              | Rigid but efficient              |
-| **Versioning** | Built-in                      | Manual (URI-based)        | Schema evolution             | Built-in via .proto evolution   |
-| **Performance**| Heavy (XML overhead)          | Lightweight               | Variable (can overfetch)     | Very fast, low latency          |
-| **Streaming**  | Limited                       | Not native                | Not native                   | Native support (bi-directional) |
-| **Tooling**    | Mature in enterprise          | Widely supported          | Strong dev tooling           | Requires gRPC-aware tools       |
+| **Feature**     | **SOAP**              | **REST**                  | **GraphQL**              | **gRPC**                        |
+| --------------- | --------------------- | ------------------------- | ------------------------ | ------------------------------- |
+| **Protocol**    | Uses HTTP, SMTP, etc. | HTTP                      | HTTP                     | HTTP/2                          |
+| **Data Format** | XML only              | JSON, XML, etc.           | JSON (or custom)         | Protobuf (binary)               |
+| **Contract**    | WSDL (strongly typed) | None (or OpenAPI/Swagger) | Strong schema (SDL)      | Strong schema (.proto)          |
+| **Flexibility** | Rigid                 | Moderate                  | Highly flexible          | Rigid but efficient             |
+| **Versioning**  | Built-in              | Manual (URI-based)        | Schema evolution         | Built-in via .proto evolution   |
+| **Performance** | Heavy (XML overhead)  | Lightweight               | Variable (can overfetch) | Very fast, low latency          |
+| **Streaming**   | Limited               | Not native                | Not native               | Native support (bi-directional) |
+| **Tooling**     | Mature in enterprise  | Widely supported          | Strong dev tooling       | Requires gRPC-aware tools       |
 
 ## Recommendations
 
 - **New web APIs**: Start with REST, consider GraphQL if you have complex client data needs.
 - **Microservices**: gRPC for internal communication, REST for external APIs.
 - **Legacy Integration**: SOAP only when required by existing systems.
-- **Avoid SOAP** for new projects unless you have specific enterprise requirements that mandate it. The performance and complexity overhead rarely justifies its use in modern applications. 
+- **Avoid SOAP** for new projects unless you have specific enterprise requirements that mandate it. The performance and complexity overhead rarely justifies its use in modern applications.

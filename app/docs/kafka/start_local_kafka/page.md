@@ -108,7 +108,7 @@ For producers and consumers, we can use `Ctrl+C` to stop them gracefully.
 
 ## Appendix: Difference between JVM-based and GraalVM-based Docker image
 
-The difference lies in how the Kafka application is compiled and executed. 
+The difference lies in how the Kafka application is compiled and executed.
 
 ### JVM based Kafka (traditional)
 
@@ -124,12 +124,11 @@ The difference lies in how the Kafka application is compiled and executed.
 
 ### Key Differences
 
-
-| Aspect | JVM | Native |
-|--------|-----|--------|
-| **Startup Time** | 10-30+ seconds startup time<br>• JVM initialization<br>• Class loading<br>• JIT warm-up | Sub-second startup (typically 50-200ms)<br>• Direct executable launch<br>• No JVM overhead |
-| **Memory Usage** | Higher memory footprint<br>• JVM overhead (~100-200MB baseline)<br>• Heap space allocation<br>• JIT compiler memory | Lower memory footprint<br>• No JVM overhead<br>• More predictable memory usage<br>• Better for resource-constrained environments |
-| **Runtime Performance** | • Slower initial performance<br>• Gets faster after JIT warm-up<br>• Peak performance can be excellent | • Consistent performance from start<br>• No warm-up period<br>• Peak performance may be lower than optimized JVM |
-| **Image Size** | Larger images<br>• Full JVM runtime<br>• All Java libraries<br>• Typically 300MB-1GB+ | Smaller images<br>• Only necessary code compiled in<br>• Typically 50-200MB |
-| **Development & Debugging** | Full ecosystem support<br>• Rich debugging tools<br>• Profiling tools<br>• Dynamic class loading | Limited tooling<br>• Debugging more challenging<br>• No dynamic class loading<br>• Static analysis required |
-| **When to use** | <br>• Production systems with steady workloads <br>• Need maximum throughput after warm-up <br>• Long-running brokers <br>• Requires full debugging/profiling capabilities  | <br>• Serverless/FaaS environments <br>• Microservices with frequent restarts <br>• CI/CD pipelines (faster test cycles) <br>• Development/testing (faster iteration) <br>• Resource-constraint environments |
+| Aspect                      | JVM                                                                                                                                                                        | Native                                                                                                                                                                                                       |
+| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Startup Time**            | 10-30+ seconds startup time<br>• JVM initialization<br>• Class loading<br>• JIT warm-up                                                                                    | Sub-second startup (typically 50-200ms)<br>• Direct executable launch<br>• No JVM overhead                                                                                                                   |
+| **Memory Usage**            | Higher memory footprint<br>• JVM overhead (~100-200MB baseline)<br>• Heap space allocation<br>• JIT compiler memory                                                        | Lower memory footprint<br>• No JVM overhead<br>• More predictable memory usage<br>• Better for resource-constrained environments                                                                             |
+| **Runtime Performance**     | • Slower initial performance<br>• Gets faster after JIT warm-up<br>• Peak performance can be excellent                                                                     | • Consistent performance from start<br>• No warm-up period<br>• Peak performance may be lower than optimized JVM                                                                                             |
+| **Image Size**              | Larger images<br>• Full JVM runtime<br>• All Java libraries<br>• Typically 300MB-1GB+                                                                                      | Smaller images<br>• Only necessary code compiled in<br>• Typically 50-200MB                                                                                                                                  |
+| **Development & Debugging** | Full ecosystem support<br>• Rich debugging tools<br>• Profiling tools<br>• Dynamic class loading                                                                           | Limited tooling<br>• Debugging more challenging<br>• No dynamic class loading<br>• Static analysis required                                                                                                  |
+| **When to use**             | <br>• Production systems with steady workloads <br>• Need maximum throughput after warm-up <br>• Long-running brokers <br>• Requires full debugging/profiling capabilities | <br>• Serverless/FaaS environments <br>• Microservices with frequent restarts <br>• CI/CD pipelines (faster test cycles) <br>• Development/testing (faster iteration) <br>• Resource-constraint environments |

@@ -6,6 +6,7 @@ description: Overview of AWS Lambda functions, their use cases, and how to confi
 ## AWS Lambda Function
 
 AWS Lambda is a compute service that lets you run code without provisioning or managing servers.
+
 - high-availability compute infrastructure
 - administration of the compute resources: auto scaling, logging, memory, CPU, network etc.
 - you only need to supply your code in one of the language runtime that lambda supports
@@ -24,6 +25,7 @@ For application scenarios that need to scale up rapidly, and scale down to zero 
 Lambda scales the function by running additional instances of it as demand increases, and by stopping instances as demand decreases.
 
 This model leads to variations in application architecture, such as:
+
 - Unless noted otherwise, incoming requests might be processed out of order or concurrently.
 - Do not rely on instances of your function being long lived, instead store your application's state elsewhere.
 - Use local storage and class-level objects to increase performance, but keep to a minimum the size of your deployment package and the amount of data that you transfer onto the execution environment.
@@ -39,14 +41,12 @@ This model leads to variations in application architecture, such as:
 ## Environment Variables
 
 - an environment variable is a key-pair of strings that are stored in a function's version-specific configuration
-- by default, the environment variables are encrypted using the default KMS key for lambda (*aws/lambda*); when the lambda is invoked, those values are decrypted and make available to the code
+- by default, the environment variables are encrypted using the default KMS key for lambda (_aws/lambda_); when the lambda is invoked, those values are decrypted and make available to the code
 - all uses that can access the lambda function in the console can see the plain text environment variables
 
 - for storing sensitive information, you can encrypt environment variables by using the console's encryption helper
-    - you must use a custom KMS key
-    - it adds an additional layer of encryption that obscures secret values in the console and API output
-    - your function retrieves the encrypted value from the environment and decrypt it by using the AWS KMS API
-    - the function's execution role needs permission to call the AWS KMS API
-    
+  - you must use a custom KMS key
+  - it adds an additional layer of encryption that obscures secret values in the console and API output
+  - your function retrieves the encrypted value from the environment and decrypt it by using the AWS KMS API
+  - the function's execution role needs permission to call the AWS KMS API
     ![lambda_environment_variable_encryption.png](./lambda_environment_variable_encryption.png)
-

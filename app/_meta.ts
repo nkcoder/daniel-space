@@ -1,22 +1,22 @@
-import { MetaRecord } from "nextra";
+import { MetaRecord } from 'nextra';
 
 const meta: MetaRecord = {
   about: {
-    title: "About",
-    type: "page"
+    title: 'About',
+    type: 'page'
   },
   project: {
-    title: "Projects",
-    type: "page"
+    title: 'Projects',
+    type: 'page'
   },
   blogs: {
-    title: "Blogs",
-    type: "doc"
+    title: 'Blogs',
+    type: 'doc'
   },
   docs: {
-    title: "Docs",
-    type: "doc",
-  },
-}
+    title: 'Docs',
+    type: 'doc'
+  }
+};
 
 export default meta;

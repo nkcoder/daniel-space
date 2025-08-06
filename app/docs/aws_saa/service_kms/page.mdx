@@ -11,37 +11,37 @@ description: Learn about AWS KMS in AWS
 - For most users, the default AWS KMS key store, fulfils their security requirements. There is no need to add an extra layer of maintenance responsibility or a dependency on an additional service.
 
 - You might consider creating a custom key store if your organisation has any of the following requirements:
-    - you have keys that are explicitly required to be protected in a single tenant HSM or in an HSM that you have direct control over
-    - you need the ability to immediately remove key materials from AWS KMS
-    - you need to be able to audit all use of your keys independently of AWS KMS or AWS CloudTrail
+  - you have keys that are explicitly required to be protected in a single tenant HSM or in an HSM that you have direct control over
+  - you need the ability to immediately remove key materials from AWS KMS
+  - you need to be able to audit all use of your keys independently of AWS KMS or AWS CloudTrail
 
 - An AWS CloudHSM key store is a **custom key store** backed by a AWS CloudHSM cluster. When you create an AWS KMS key in a custom key store, AWS KMS generates and stores non-extractable key material for the KMS key in an AWS CloudHSM cluster that you own and manage.
 - Each custom key store is associated with an AWS CloudHSM cluster in your AWS account
 
 ## Key policy
 
-- A key policy is a resource policy for an AWS KMS key. Key policies are the primary way to control access to KMS keys. 
-- Every KMS key must have exactly one key policy. 
+- A key policy is a resource policy for an AWS KMS key. Key policies are the primary way to control access to KMS keys.
+- Every KMS key must have exactly one key policy.
 - The statements in the key policy determine who has permission to use the KMS key and how they can use it. You can also use IAM policies and grants to control access to the KMS key, but every KMS key must have a key policy.
-- Unless the key policy explicitly allows it, you **cannot** use IAM policies to _allow_ access to a KMS key. The default key policy enables IAM policies.
+- Unless the key policy explicitly allows it, you **cannot** use IAM policies to *allow* access to a KMS key. The default key policy enables IAM policies.
 - Unlike IAM policies, which are global, key policies are Regional. A key policy controls access only to a KMS key in the same Region. It has no effect on KMS keys in other Regions.
 
 - Default key policy when you create a KMS key programmatically
-    - This default key policy has one policy statement that gives the AWS account that owns the KMS key permission to use IAM policies to allow access to all AWS KMS operations on the KMS key.
+  - This default key policy has one policy statement that gives the AWS account that owns the KMS key permission to use IAM policies to allow access to all AWS KMS operations on the KMS key.
+
 ```json
 {
   "Sid": "Enable IAM User Permissions",
   "Effect": "Allow",
   "Principal": {
     "AWS": "arn:aws:iam::111122223333:root"
-   },
+  },
   "Action": "kms:*",
   "Resource": "*"
 }
 ```
+
 - **Default key policy when you create a KMS key via the AWS Console**
-    - Allows access to the AWS account and enables IAM policies
-    - A key administrators statement
-    - A key users statement
-
-
+  - Allows access to the AWS account and enables IAM policies
+  - A key administrators statement
+  - A key users statement

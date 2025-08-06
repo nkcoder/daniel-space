@@ -1,11 +1,11 @@
-import { MetaRecord } from "nextra";
+import { MetaRecord } from 'nextra';
 
-const meta: MetaRecord= {
-  index: "Overview",
-  java: "Java",
-  nodejs: "Node.js",
-  kafka: "Kafka",
-  aws_saa: "AWS SAA",
-}
+const meta: MetaRecord = {
+  index: 'Overview',
+  java: 'Java',
+  nodejs: 'Node.js',
+  kafka: 'Kafka',
+  aws_saa: 'AWS SAA'
+};
 
 export default meta;

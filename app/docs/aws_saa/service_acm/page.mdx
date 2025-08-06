@@ -8,7 +8,7 @@ description: Learn about AWS ACM in AWS
 ## AWS Certificate Manager
 
 - AWS Certificate Manager (ACM) handles the complexity of creating, storing, and renewing public and private SSL/TLS X.509 certificates and keys that protect your AWS websites and applications.
-- You can provide certificates for your integrated AWS services either by issuing them directly with ACM or by importing third-party certificates into the ACM management system. 
+- You can provide certificates for your integrated AWS services either by issuing them directly with ACM or by importing third-party certificates into the ACM management system.
 
 - Automated provisioning: Quickly issues domain-validated certificates and eliminates most manual steps.
 - Auto-renewal: ACM automatically renews certificates before expiration, avoiding downtime or security lapses.
@@ -17,20 +17,20 @@ description: Learn about AWS ACM in AWS
 - Seamless integration: Works with other AWS services such as Elastic Load Balancing, Amazon CloudFront, and Amazon API Gateway.
 
 - AWS offers two options to customers deploying managed X.509 certificates:
-    - AWS Certificate Manager (ACM): 
-        - It is for enterprise customers who need a secure web presence using TLS.
-        - The most common application is a secure public website with significant traffic requrements.
-    - AWS Private CA: 
-        - It is for enterprise customers building a public key infrastructure (PKI) inside the AWS cloud and intended for private use within an organization
-        - Certificates issued by a private CA cannot be used on the internet.
+  - AWS Certificate Manager (ACM):
+    - It is for enterprise customers who need a secure web presence using TLS.
+    - The most common application is a secure public website with significant traffic requrements.
+  - AWS Private CA:
+    - It is for enterprise customers building a public key infrastructure (PKI) inside the AWS cloud and intended for private use within an organization
+    - Certificates issued by a private CA cannot be used on the internet.
 
 ## IAM Certificate Store
 
-- To enable HTTPS connections to your website or application in AWS, you need an SSL/TLS _server certificate_. 
-    - For certificates in a Region supported by AWS Certificate Manager (ACM), we recommend that you use ACM to provision, manage, and deploy your server certificates.
-    - In unsupported Regions, you must use IAM as a certificate manager.
-- Use IAM as a certificate manager only when you must support HTTPS connections in a Region that is not supported by ACM. IAM securely encrypts your private keys and stores the encrypted version in IAM SSL certificate storage. IAM supports deploying server certificates in all Regions, but you must obtain your certificate from an external provider for use with AWS. You cannot upload an ACM certificate to IAM. 
+- To enable HTTPS connections to your website or application in AWS, you need an SSL/TLS *server certificate*.
+  - For certificates in a Region supported by AWS Certificate Manager (ACM), we recommend that you use ACM to provision, manage, and deploy your server certificates.
+  - In unsupported Regions, you must use IAM as a certificate manager.
+- Use IAM as a certificate manager only when you must support HTTPS connections in a Region that is not supported by ACM. IAM securely encrypts your private keys and stores the encrypted version in IAM SSL certificate storage. IAM supports deploying server certificates in all Regions, but you must obtain your certificate from an external provider for use with AWS. You cannot upload an ACM certificate to IAM.
 - You cannot manage your certificates from the IAM console, you need to use IAM API:
-    - UploadServerCertificate: upload a certificate
-    - Get-IAMServerCertificate: retrieve a certificate
-    - DeleteServerCertificate: delete a server certificate
+  - UploadServerCertificate: upload a certificate
+  - Get-IAMServerCertificate: retrieve a certificate
+  - DeleteServerCertificate: delete a server certificate

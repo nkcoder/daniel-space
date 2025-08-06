@@ -1,6 +1,6 @@
 ---
-title: "Route 53"
-description: "AWS Route 53 DNS service covering record types, hosted zones, routing policies, TTL, CNAME vs Alias, and failover configurations."
+title: 'Route 53'
+description: 'AWS Route 53 DNS service covering record types, hosted zones, routing policies, TTL, CNAME vs Alias, and failover configurations.'
 ---
 
 # Route 53
@@ -10,11 +10,11 @@ description: "AWS Route 53 DNS service covering record types, hosted zones, rout
 - A: map a hostname to IPv4
 - AAAA: map a hostname to IPv6
 - CNAME: map a hostname to another hostname
-    - the target is a domain name which must have an A or AAAA record
-    - cannot create CNAME record for the top node of the a DNS namespace
-        - example.com => no, www.example.com => yes
+  - the target is a domain name which must have an A or AAAA record
+  - cannot create CNAME record for the top node of the a DNS namespace
+    - example.com => no, www.example.com => yes
 - NS: name server for the Hosted Zone
-    - control how traffic is routed for a domain
+  - control how traffic is routed for a domain
 
 ## Host Zone
 
@@ -29,27 +29,24 @@ description: "AWS Route 53 DNS service covering record types, hosted zones, rout
 ## CNAME vs Alias
 
 - CNAME
-    - maps a hostname to any other hostname (point to Load Balancer, CloudFront)
-    - only for non-ROOT domain (not for mydomain.com)
-	
+  - maps a hostname to any other hostname (point to Load Balancer, CloudFront)
+  - only for non-ROOT domain (not for mydomain.com)
 - Alias
-    - maps a hostname to an AWS resource
-    - works for both ROOT domain (mydomain.com) and non-ROOT domain(abc.mydomain.com)
-    - automatically recognize the changes in the resource's IP addresses
-    - free of charge
-    - native health check
-    - targets
-        - ELB, CloudFormation Distributions, API Gateway, S3 websites, VPC interface endpoints, Global Accelerator
-        - Route 53 record in the same hosted zone
-        - **NOT** for an EC2 DNS name
+  - maps a hostname to an AWS resource
+  - works for both ROOT domain (mydomain.com) and non-ROOT domain(abc.mydomain.com)
+  - automatically recognize the changes in the resource's IP addresses
+  - free of charge
+  - native health check
+  - targets
+    - ELB, CloudFormation Distributions, API Gateway, S3 websites, VPC interface endpoints, Global Accelerator
+    - Route 53 record in the same hosted zone
+    - **NOT** for an EC2 DNS name
 
 - Difference
-    - Alias can be used for the top node of a DNS namespace (Zone Apex)
-    - Alias record is always of type A/AAAA for AWS resources
+  - Alias can be used for the top node of a DNS namespace (Zone Apex)
+  - Alias record is always of type A/AAAA for AWS resources
 
-- For example: we have a ALB: my-backend.ap-southeast-2.elb.amazonaws.com, the following two configs are the same
-      - CNAME: *my-backend.my-domain.com* => *my-backend.ap-southeast-2.elb.amazonaws.com*
-      - A (Alias): *my-backend.my-domain.com* => *my-backend.ap-southeast-2.elb.amazonaws.com*
+- For example: we have a ALB: my-backend.ap-southeast-2.elb.amazonaws.com, the following two configs are the same - CNAME: _my-backend.my-domain.com_ => _my-backend.ap-southeast-2.elb.amazonaws.com_ - A (Alias): _my-backend.my-domain.com_ => _my-backend.ap-southeast-2.elb.amazonaws.com_
 
 ## Routing Policies
 
@@ -57,58 +54,58 @@ description: "AWS Route 53 DNS service covering record types, hosted zones, rout
 - DNS doesn't route any traffic, it only response to DNS queries
 
 - Simple
-    - typically route traffic to a single resource
-    - can specify multiple values in the same record, a random one is chosen by the client
-    - when alias is enabled, specify only one AWS resource
-    - cannot be associated with health checks
+  - typically route traffic to a single resource
+  - can specify multiple values in the same record, a random one is chosen by the client
+  - when alias is enabled, specify only one AWS resource
+  - cannot be associated with health checks
 
 - Weight
-    - control the % of the requests that go to each specific resource
-    - DNS records must have the same name and type
-    - use cases:
-        - load balancing between regions
-        - testing new applications
+  - control the % of the requests that go to each specific resource
+  - DNS records must have the same name and type
+  - use cases:
+    - load balancing between regions
+    - testing new applications
 
 - Latency
-    - route traffic to resources in the AWS region that provides the lowest latency
-    - all resources must be in AWS regions
+  - route traffic to resources in the AWS region that provides the lowest latency
+  - all resources must be in AWS regions
 
 - Failover
-    - route traffic to a resource when the resource is healthy or to a different resource when the first resource is unhealthy
-    - primary record
-    - secondary record (failover)
+  - route traffic to a resource when the resource is healthy or to a different resource when the first resource is unhealthy
+  - primary record
+  - secondary record (failover)
 
 - Geolocation
-    - based on geographic location of your users
-    - Location: continents, countries/regions
+  - based on geographic location of your users
+  - Location: continents, countries/regions
 
 - Geoproximity
-    - based on geographic location of your users
-    - location type: Coordinates, AWS local zone group, AWS Region
-    - supports `bias` to expand or shrink the size of the geographic region
+  - based on geographic location of your users
+  - location type: Coordinates, AWS local zone group, AWS Region
+  - supports `bias` to expand or shrink the size of the geographic region
 
 - IP-based
-    - based on user's IP address, define IP address range (CIDR)
+  - based on user's IP address, define IP address range (CIDR)
 
 - Multi value
-    - return multiple values (such as IP addresses) for the DNS query
-    - can work with health checks, only healthy resources are returned
+  - return multiple values (such as IP addresses) for the DNS query
+  - can work with health checks, only healthy resources are returned
 
 ## Routing traffic to a website that is hosted in a S3 bucket
 
 - Needs a registered domain
 - Needs a S3 bucket that's configured to host a static website, and the bucket name must be the same as your domain or subdomain
-    - for example, if you use the subdomain, _blog.daniel.com_, the bucket name must be _blog.daniel.com_
+  - for example, if you use the subdomain, _blog.daniel.com_, the bucket name must be _blog.daniel.com_
 - The S3 bucket configured as a website endpoint doesn't support SSL/TLS, so you need to route traffic to the CloudFront distribution and use the S3 bucket as the origin for the distribution
 
 ## Active-active and active-passive failover
 
 - Active-active failover
-    - you configure active-active failover using any routing policy other than `failover`
-    - you want **all** of your resources to be available the majority of the time; when a resource becomes unavailable, Route 53 can detect that it's unhealthy and stop including it when responding to queries
-    - all the records that have the same name, the same type (such as A or AAAA) and the same routing policy (such as weighted or latency) are active unless Route 53 considers them unhealthy
+  - you configure active-active failover using any routing policy other than `failover`
+  - you want **all** of your resources to be available the majority of the time; when a resource becomes unavailable, Route 53 can detect that it's unhealthy and stop including it when responding to queries
+  - all the records that have the same name, the same type (such as A or AAAA) and the same routing policy (such as weighted or latency) are active unless Route 53 considers them unhealthy
 
 - Active-passive failover
-    - you configure active-passive failover using the `failover` routing policy
-    - you want a **primary** resource or group of resources to be available the majority of the time and you want a **secondary** resource or group of resources to be on standby in case all the primary resources become unavailable 
-    - when responding to queries, Route 53 includes only the healthy primary resources; if all the primary resources are unhealthy, Route53 begins to include only the health secondary resources
+  - you configure active-passive failover using the `failover` routing policy
+  - you want a **primary** resource or group of resources to be available the majority of the time and you want a **secondary** resource or group of resources to be on standby in case all the primary resources become unavailable
+  - when responding to queries, Route 53 includes only the healthy primary resources; if all the primary resources are unhealthy, Route53 begins to include only the health secondary resources

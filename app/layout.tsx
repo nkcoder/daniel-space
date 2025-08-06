@@ -8,14 +8,14 @@ export const metadata: Metadata = {
   title: "Daniel's Space - Tech & Life",
   description: 'A modern documentation site about technology, development, and life experiences',
   icons: {
-    icon: '/favicon.ico',
-  },
+    icon: '/favicon.ico'
+  }
 };
 
 export const viewport: Viewport = {
   themeColor: '#3b82f6',
   width: 'device-width',
-  initialScale: 1.0,
+  initialScale: 1.0
 };
 
 const navbar = <Navbar logo={<span className="font-bold text-lg">Daniel's Space</span>} />;
@@ -49,7 +49,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           sidebar={{
             defaultMenuCollapseLevel: 1,
             toggleButton: true,
-            autoCollapse: true,
+            autoCollapse: true
           }}
           toc={{
             backToTop: true,

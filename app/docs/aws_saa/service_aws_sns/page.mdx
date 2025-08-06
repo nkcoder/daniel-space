@@ -6,20 +6,20 @@ description: Learn about AWS SNS in AWS
 ## SNS subscriptions
 
 - When you create a new subscription for a SNS topic, you can specify:
-    - Subscription filter policy
-        - filters the messages that a subscriber receives based on message attributes and message body
-        - Sample use case: you can create one SNS topic, and multiple SQS queues subscribed to the topic, set the filter policies in the SNS subscription to publish messages to designated SQS queue
-    - Redrive policy (dead letter queue)
-        - send undelivered messages to a dead letter queue
+  - Subscription filter policy
+    - filters the messages that a subscriber receives based on message attributes and message body
+    - Sample use case: you can create one SNS topic, and multiple SQS queues subscribed to the topic, set the filter policies in the SNS subscription to publish messages to designated SQS queue
+  - Redrive policy (dead letter queue)
+    - send undelivered messages to a dead letter queue
 - Subscription protocols
-    - Standard topic: 
-        - SQS
-        - AWS Lambda
-        - SMS
-        - Amazon Kinesis Data Firehose
-        - Email / Email-JSON
-        - HTTP/HTTPS
-        - Platform application Endpoint
-    - FIFO topic:
-        - SQS (standard queue or FIFO queue)
-            - Strict message ordering and deduplication are guaranteed only when delivering to SQS FIFO queues.
+  - Standard topic:
+    - SQS
+    - AWS Lambda
+    - SMS
+    - Amazon Kinesis Data Firehose
+    - Email / Email-JSON
+    - HTTP/HTTPS
+    - Platform application Endpoint
+  - FIFO topic:
+    - SQS (standard queue or FIFO queue)
+      - Strict message ordering and deduplication are guaranteed only when delivering to SQS FIFO queues.
