@@ -1,6 +1,7 @@
 ---
 title: Start local Kafka
 description: How to start a local Kafka instance using Docker for development and testing purposes.
+date: 2025-08-05
 ---
 
 ## Get Kafka
@@ -105,7 +106,7 @@ $ docker compose down
 
 For producers and consumers, we can use `Ctrl+C` to stop them gracefully.
 
-## Appendix: Difference between JVM based and GraalVM based Kafka Docker images
+## Appendix: Difference between JVM-based and GraalVM-based Docker image
 
 The difference lies in how the Kafka application is compiled and executed. 
 
@@ -123,7 +124,6 @@ The difference lies in how the Kafka application is compiled and executed.
 
 ### Key Differences
 
-# JVM vs Native Image Comparison
 
 | Aspect | JVM | Native |
 |--------|-----|--------|

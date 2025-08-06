@@ -5,6 +5,7 @@ const withNextra = nextra({
   search: true,
   defaultShowCopyCode: true,
   readingTime: true,
+  codeHighlight: true
 });
 
 // regular next.js options

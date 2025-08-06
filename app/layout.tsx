@@ -41,6 +41,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           navbar={navbar}
           pageMap={pageMap}
           footer={footer}
+          docsRepositoryBase="https://github.com/nkcoder/daniel-space/blob/main"
+          feedback={{
+            content: 'Question? Give us feedback →',
+            link: 'https://github.com/nkcoder/daniel-space/issues/new'
+          }}
           sidebar={{
             defaultMenuCollapseLevel: 1,
             toggleButton: true,
