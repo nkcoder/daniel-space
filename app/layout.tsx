@@ -20,7 +20,7 @@ export const viewport: Viewport = {
 
 const navbar = <Navbar logo={<span className="font-bold text-lg">Daniel's Space</span>} />;
 
-// TODO: tailwind css is not working
+// TODO: tailwind css is not working for footer, so disable it for now
 const footer = (
   <Footer>
     <div className="text-center text-red-500">
@@ -40,7 +40,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <Layout
           navbar={navbar}
           pageMap={pageMap}
-          footer={footer}
+          // footer={footer}
           docsRepositoryBase="https://github.com/nkcoder/daniel-space/blob/main"
           feedback={{
             content: 'Question? Give us feedback →',
@@ -49,9 +49,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           sidebar={{
             defaultMenuCollapseLevel: 1,
             toggleButton: true,
+            autoCollapse: true,
           }}
           toc={{
             backToTop: true,
+            float: true
           }}
         >
           {children}
