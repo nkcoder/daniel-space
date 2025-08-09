@@ -38,7 +38,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             link: 'https://github.com/nkcoder/daniel-space/issues/new'
           }}
           sidebar={{
-            defaultMenuCollapseLevel: 1,
+            defaultMenuCollapseLevel: 2,
             toggleButton: true,
             autoCollapse: true
           }}
