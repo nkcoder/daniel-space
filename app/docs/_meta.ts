@@ -6,7 +6,11 @@ const meta: MetaRecord = {
   java: 'Java',
   nodejs: 'Node.js',
   kafka: 'Kafka',
-  aws_saa: 'AWS SAA'
+  database: 'Database',
+  engineering: 'Engineering',
+  architecture: 'Architecture',
+  aws_saa: 'AWS SAA',
+  misc: 'Miscellaneous'
 };
 
 export default meta;

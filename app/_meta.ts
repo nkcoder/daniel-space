@@ -9,10 +9,6 @@ const meta: MetaRecord = {
     title: 'Projects',
     type: 'page'
   },
-  blogs: {
-    title: 'Blogs',
-    type: 'page'
-  },
   docs: {
     title: 'Docs',
     type: 'doc'
