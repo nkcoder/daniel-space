@@ -1,5 +1,5 @@
 import { Metadata, Viewport } from 'next';
-import { Footer, Layout, Navbar } from 'nextra-theme-docs';
+import { Layout, Navbar } from 'nextra-theme-docs';
 import 'nextra-theme-docs/style.css';
 import { getPageMap } from 'nextra/page-map';
 import './globals.css';
@@ -21,15 +21,6 @@ export const viewport: Viewport = {
 const navbar = <Navbar logo={<span className="font-bold text-lg">Daniel's Space</span>} />;
 
 // TODO: tailwind css is not working for footer, so disable it for now
-const footer = (
-  <Footer>
-    <div className="text-center text-red-500">
-      <p className="text-xs text-red-600 dark:text-red-400 text-center">
-        MIT {new Date().getFullYear()} © Daniel's Space. Built with ❤️ using Nextra.
-      </p>
-    </div>
-  </Footer>
-);
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const pageMap = await getPageMap();
