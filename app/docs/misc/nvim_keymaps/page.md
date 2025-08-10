@@ -55,6 +55,15 @@ description: 'A collection of my personal Neovim (LazyVim) key mappings for effi
 - [ + w: Previous warning
 - [ + d: Previous diagnostic
 
+- ] + m: Go to the start of next method
+- ] + M: Go to the end of next method
+- [ + m: Go to the start of previous method
+- [ + M: Go to the end of previous method]
+
+- `<leader>` + s: Search
+- `<leader>` + ss: Search symbols (functions)
+- `<leader>` + sc: Search command history
+
 ## Editor
 
 - g + u: Lowercase
@@ -74,11 +83,11 @@ description: 'A collection of my personal Neovim (LazyVim) key mappings for effi
 - `<leader>` + fn: New file
 - `<leader>` + fr: Recent files
 
-- g + sa: Add surrounding
+- g + sa: Add surrounding (For example: `gsaiw"` to add double quotes to the current word)
 - g + sd: Delete surrounding
 - g + sr: Replace surrounding
 
-> Need to enable mini-surround.
+> Need to enable/install `mini-surround`.
 
 ## Git
 
