@@ -28,6 +28,9 @@ description: 'A collection of my personal Neovim (LazyVim) key mappings for effi
 - `<leader>` + bd: Delete current buffer(close current tab)
 - `<leader>` + bo: Delete other buffers (close other tabs)
 
+- `<leader>` + fb: Buffers
+- `<leader>` + fB: All buffers
+
 ## Code Navigation
 
 - g + d: Go to definition
@@ -65,6 +68,17 @@ description: 'A collection of my personal Neovim (LazyVim) key mappings for effi
 - `<leader>` + uw: Toggle wrap
 - `<leader>` + ul: Toggle line numbers
 - `<leader>` + uh: Toggle inlay hints
+
+- `<leader>` + ff: Find files (root dir)
+- `<leader>` + fF: Find files (cwd)
+- `<leader>` + fn: New file
+- `<leader>` + fr: Recent files
+
+- g + sa: Add surrounding
+- g + sd: Delete surrounding
+- g + sr: Replace surrounding
+
+> Need to enable mini-surround.
 
 ## Git
 
