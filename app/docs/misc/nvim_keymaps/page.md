@@ -63,6 +63,7 @@ description: 'A collection of my personal Neovim (LazyVim) key mappings for effi
 - `<leader>` + s: Search
 - `<leader>` + ss: Search symbols (functions)
 - `<leader>` + sc: Search command history
+- `<leader>` + sg: Grep
 
 ## Editor
 
