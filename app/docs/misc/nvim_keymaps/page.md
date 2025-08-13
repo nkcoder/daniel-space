@@ -70,8 +70,7 @@ description: 'A collection of my personal Neovim (LazyVim) key mappings for effi
 - g + u: Lowercase
 - g + U: Uppercase
 
-- `<leader>` + cr: Rename
-- `<leader>` + cR: Rename file
+- `<leader>` + cr: Rename (symbols/functions/variables)
 - `<leader>` + ca: Code action
 - `<leader>` + cA: Source action
 
@@ -87,6 +86,12 @@ description: 'A collection of my personal Neovim (LazyVim) key mappings for effi
 - g + sa: Add surrounding (For example: `gsaiw"` to add double quotes to the current word)
 - g + sd: Delete surrounding
 - g + sr: Replace surrounding
+
+**The following commands work when your cursor is on the file/directory in the Explorer window**
+
+- c: Copy the file
+- r: Rename the file
+- a: Add a new file/directory
 
 > Need to enable/install `mini-surround`.
 
