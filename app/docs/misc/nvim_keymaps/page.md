@@ -87,6 +87,10 @@ description: 'A collection of my personal Neovim (LazyVim) key mappings for effi
 - g + sd: Delete surrounding
 - g + sr: Replace surrounding
 
+- zM: Close all folds (Fold All)
+- zR: Open all folds (Unfold All)
+- za: Toggle fold under the cursor
+
 **The following commands work when your cursor is on the file/directory in the Explorer window**
 
 - c: Copy the file
