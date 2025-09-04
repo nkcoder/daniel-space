@@ -165,11 +165,162 @@ console.log('=== End ===');
 // 🚀 setImmediate callback (CHECK PHASE)
 ```
 
-## Execution Order Summary
+### Execution Order Summary
 
 - First: `process.nextTick()` has the highest priority.
 - Then: Promise callbacks (microtasks).
 - Finally: Event loop phases in order: Timers → Pending Callbacks → Poll → Check → Close Callbacks.
+
+## Don't Block the Event Loop
+
+### Synchronous CPU-intensive operations
+
+**Problematic operations that block the event loop:**
+
+- Large loops or recursive functions
+- Complex calculations (cryptography, image processing)
+- JSON.parse/stringify on large objects
+- Large regular expressions
+- Buffer operations on large data
+
+**How to avoid blocking:**
+
+- Offload to worker threads
+- Time-slicing with `setImmediate()` or `setTimeout()`
+- Batch processing with time limits
+
+```js
+// Blocking ❌
+function processLargeJSON(largeObject) {
+  return JSON.stringify(largeObject); // Blocks for large objects
+}
+
+// Non-blocking ✅
+async function processLargeJSONAsync(obj, maxTime = 16) {
+  // 16ms ~= 60fps
+  const keys = Object.keys(obj);
+  const result = {};
+  let processed = 0;
+
+  while (processed < keys.length) {
+    const batchStart = performance.now();
+
+    while (processed < keys.length && performance.now() - batchStart < maxTime) {
+      const key = keys[processed];
+      result[key] = typeof obj[key] === 'object' ? JSON.stringify(obj[key]) : obj[key];
+      processed++;
+    }
+
+    // Yield to event loop
+    await new Promise((resolve) => setImmediate(resolve));
+  }
+
+  return JSON.stringify(result);
+}
+```
+
+### Synchronous I/O operations
+
+**Problematic operations that block the event loop:**
+
+- Synchronous file operations (`fs.readFileSync`, `fs.writeFileSync`)
+- Synchronous database queries
+- Blocking network requests
+
+**How to avoid blocking:**
+
+- Use asynchronous versions of I/O functions
+- Async Database Operations with Connection Pooling
+- Use Streaming for Large Files
+
+```js
+// Blocking ❌
+function processLargeFile(filename) {
+  const data = fs.readFileSync(filename, 'utf8');
+  return data
+    .split('\n')
+    .map((line) => line.toUpperCase())
+    .join('\n');
+}
+
+// Non-blocking ✅
+function processLargeFileStream(filename) {
+  const readable = fs.createReadStream(filename, { encoding: 'utf8' });
+  const writable = fs.createWriteStream(filename + '.processed');
+
+  const transform = new require('stream').Transform({
+    transform(chunk, encoding, callback) {
+      const processed = chunk.toString().toUpperCase();
+      callback(null, processed);
+    }
+  });
+
+  return pipeline(readable, transform, writable);
+}
+```
+
+### Memory-intensive operations
+
+**Problematic operations that can lead to event loop delays:**
+
+- Large object creation/manipulation
+- Garbage collection of large objects
+
+**How to avoid blocking:**
+
+- Use Streaming for Large Data Processing
+- Chunk Large Operations and Clean Up
+- Use Object Pools for Frequently Created Objects
+
+```js
+class BufferPool {
+  constructor(size = 10, bufferSize = 1024) {
+    this.pool = [];
+    this.size = size;
+    this.bufferSize = bufferSize;
+
+    // Pre-allocate buffers
+    for (let i = 0; i < size; i++) {
+      this.pool.push(Buffer.allocUnsafe(bufferSize));
+    }
+  }
+
+  acquire() {
+    return this.pool.pop() || Buffer.allocUnsafe(this.bufferSize);
+  }
+
+  release(buffer) {
+    if (this.pool.length < this.size) {
+      buffer.fill(0); // Clear the buffer
+      this.pool.push(buffer);
+    }
+  }
+}
+
+// Usage
+const bufferPool = new BufferPool();
+
+async function processDataChunks(dataStream) {
+  for await (const chunk of dataStream) {
+    const buffer = bufferPool.acquire();
+
+    try {
+      // Process with buffer
+      await processChunk(chunk, buffer);
+    } finally {
+      bufferPool.release(buffer); // Return to pool
+    }
+
+    await new Promise((resolve) => setImmediate(resolve));
+  }
+}
+```
+
+### Key Principles
+
+- CPU-intensive: Break into chunks, use worker threads, or time-slice
+- I/O operations: Always use async APIs, implement connection pooling, use streams
+- Memory-intensive: Stream data, chunk processing, implement object pooling, clean up promptly
 
 ## Key Takeaways
 
