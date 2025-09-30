@@ -1,0 +1,174 @@
+---
+title: '`type` vs `interface` in TypeScript'
+description: 'The main differences between `type` and `interface` in TypeScript'
+date: 2025-09-30
+---
+
+# Type vs Interface in TypeScript
+
+Both `type` and `interface` define shapes for objects in TypeScript, but they have important differences.
+
+## Key Differences
+
+**Declaration Merging**
+
+Interfaces can be merged when declared multiple times, types cannot:
+
+```typescript
+interface User {
+  name: string;
+}
+
+interface User {
+  age: number;
+}
+
+// Merged into: { name: string; age: number; }
+const user: User = { name: 'Alice', age: 30 };
+
+type Product = { id: string };
+type Product = { price: number }; // ❌ Error: Duplicate identifier
+```
+
+**Extending/Inheritance**
+
+Both can extend, but with different syntax:
+
+```typescript
+// Interface extending
+interface Animal {
+  species: string;
+}
+
+interface Dog extends Animal {
+  breed: string;
+}
+
+// Type intersection
+type Animal = {
+  species: string;
+};
+
+type Dog = Animal & {
+  breed: string;
+};
+```
+
+**Union and Advanced Types**
+
+Types are more flexible for unions, primitives, and computed properties:
+
+```typescript
+// ✅ Types can do unions
+type Status = 'pending' | 'approved' | 'rejected';
+type ID = string | number;
+
+// ❌ Interfaces cannot represent unions directly
+interface Status {
+  /* can't do this */
+}
+
+// ✅ Types can use mapped/conditional types
+type ReadOnly<T> = {
+  readonly [K in keyof T]: T[K];
+};
+
+// ✅ Types can alias primitives
+type Email = string;
+```
+
+## Practical Examples
+
+**Domain Models (prefer interfaces)**
+
+```typescript
+// Good for domain entities
+interface Order {
+  id: string;
+  userId: string;
+  items: OrderItem[];
+  total: number;
+}
+
+interface OrderItem {
+  productId: string;
+  quantity: number;
+  price: number;
+}
+
+// Easy to extend in different modules
+interface Order {
+  createdAt: Date;
+  updatedAt: Date;
+}
+```
+
+**API Response Types (prefer types)**
+
+```typescript
+// Flexible for various response shapes
+type ApiResponse<T> = { success: true; data: T } | { success: false; error: string };
+
+type OrderResponse = ApiResponse<Order>;
+
+// Usage
+const handleResponse = (response: OrderResponse) => {
+  if (response.success) {
+    console.log(response.data);
+  } else {
+    console.error(response.error);
+  }
+};
+```
+
+**Event Payloads (prefer types)**
+
+```typescript
+// Good for discriminated unions in event-driven systems
+type DomainEvent =
+  | { type: 'OrderCreated'; payload: { orderId: string; userId: string } }
+  | { type: 'OrderShipped'; payload: { orderId: string; trackingNumber: string } }
+  | { type: 'OrderCancelled'; payload: { orderId: string; reason: string } };
+
+const handleEvent = (event: DomainEvent) => {
+  switch (event.type) {
+    case 'OrderCreated':
+      // TypeScript knows payload structure here
+      console.log(event.payload.orderId);
+      break;
+    // ...
+  }
+};
+```
+
+## Pros and Cons
+
+**Interface Pros:**
+
+- Better error messages (often more readable)
+- Declaration merging useful for extending third-party types
+- Slightly better performance in type checking
+- More familiar to developers from OOP backgrounds
+
+**Interface Cons:**
+
+- Cannot represent unions, primitives, or complex types
+- Less flexible for functional patterns
+- Cannot use computed properties
+
+**Type Pros:**
+
+- Can represent anything (unions, primitives, tuples, etc.)
+- More powerful for functional and generic programming
+- Can use mapped and conditional types
+- Better for discriminated unions
+
+**Type Cons:**
+
+- No declaration merging
+- Error messages can be more complex
+- Can be overused, making code less readable
+
+## Recommendation
+
+Many teams adopt a rule: "Use interfaces for object shapes, types for everything else."
