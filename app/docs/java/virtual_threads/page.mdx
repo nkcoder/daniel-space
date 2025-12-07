@@ -5,7 +5,7 @@ description: A comprehensive guide that covers virtual threads from the ground u
 
 # Java Virtual Threads: A Comprehensive Guide
 
-Virtual Threads, introduced as a preview in Java 19 and finalised in Java 21 (JEP 444), represent a fundamental shift in how we approach concurrent programming in Java. This guide covers everything you need to know to effectively leverage this feature.
+Virtual Threads, introduced as a preview in Java 19 and finalised in Java 21 ([JEP 444](https://openjdk.org/jeps/444)), represent a fundamental shift in how we approach concurrent programming in Java. This guide covers everything you need to know to effectively leverage this feature.
 
 ## The Problem: Why We Needed Virtual Threads
 
@@ -145,6 +145,174 @@ ExecutorService cpuExecutor = Executors.newFixedThreadPool(
 );
 ```
 
+### Deep Dive: Why Virtual Threads Don't Help CPU-Bound Tasks
+
+This is one of the most misunderstood aspects of virtual threads. Let's break down exactly why they provide no benefit (and can actually hurt) for CPU-bound work.
+
+#### The Core Mechanism
+
+Virtual threads achieve their scalability through **yielding during blocking operations**. When a virtual thread hits a blocking call, the JVM captures the continuation, unmounts the virtual thread, and runs another one on the same carrier. This is the **entire source of their efficiency**.
+
+CPU-bound tasks **never block**. They're continuously computing, which means they never yield:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ I/O-Bound Task on Virtual Thread                                │
+│                                                                 │
+│ VT-1: [compute]──[BLOCK: HTTP call]──────────[compute]──[done]  │
+│                        │                          ▲             │
+│                        ▼                          │             │
+│       (unmount, carrier runs VT-2)    (remount when I/O done)   │
+│                                                                 │
+│ Carrier utilisation: HIGH (always running something)            │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│ CPU-Bound Task on Virtual Thread                                │
+│                                                                 │
+│ VT-1: [compute──compute──compute──compute──compute──compute]    │
+│                                                                 │
+│       (never yields, monopolises carrier the entire time)       │
+│                                                                 │
+│ Carrier utilisation: HIGH but... only running ONE virtual thread│
+└─────────────────────────────────────────────────────────────────┘
+```
+
+#### The Scheduler Bottleneck
+
+The default virtual thread scheduler uses a `ForkJoinPool` with parallelism equal to your CPU cores. On an 8-core machine:
+
+```java
+// You have 8 carrier threads (on an 8-core machine)
+// You submit 1000 CPU-bound tasks to virtual threads
+
+try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
+    for (int i = 0; i < 1000; i++) {
+        executor.submit(() -> {
+            // Pure CPU work - matrix multiplication, hashing, etc.
+            return computeIntensiveTask();
+        });
+    }
+}
+```
+
+What happens:
+
+1. 1000 virtual threads are created (cheap, ~1KB each)
+2. 8 virtual threads get mounted on the 8 carrier threads
+3. Those 8 run to completion, monopolising their carriers
+4. The other 992 virtual threads **sit waiting in a queue**
+5. No parallelism benefit beyond what 8 platform threads would give you
+
+You've created 1000 objects, added scheduling overhead, but **you're still only running 8 computations in parallel**.
+
+#### The Overhead Cost
+
+Virtual threads aren't free. They add continuation allocation, scheduling overhead, and stack management. For I/O-bound work, this overhead is negligible compared to milliseconds of I/O wait. For CPU-bound work, it's measurable:
+
+```java
+// Benchmarking CPU-bound work
+@Benchmark
+public void platformThreads() {
+    try (var executor = Executors.newFixedThreadPool(8)) {
+        var futures = IntStream.range(0, 1000)
+            .mapToObj(i -> executor.submit(() -> fibonacci(35)))
+            .toList();
+        futures.forEach(f -> f.get());
+    }
+}
+
+@Benchmark
+public void virtualThreads() {
+    try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
+        var futures = IntStream.range(0, 1000)
+            .mapToObj(i -> executor.submit(() -> fibonacci(35)))
+            .toList();
+        futures.forEach(f -> f.get());
+    }
+}
+
+// Typical results:
+// platformThreads:  1.23 seconds
+// virtualThreads:   1.31 seconds  (slower due to overhead!)
+```
+
+#### Visual Timeline Comparison
+
+```
+Scenario: 4 carriers, processing tasks over time
+═══════════════════════════════════════════════════════════════
+
+I/O-BOUND TASKS (Virtual Threads shine)
+────────────────────────────────────────
+Each task: 5ms compute, 100ms I/O wait, 5ms compute
+
+Carrier 1: [VT1]─░░░░░░░░░░─[VT1]╾[VT5]─░░░░░░░░░░─[VT5]╾[VT9]...
+Carrier 2: [VT2]─░░░░░░░░░░─[VT2]╾[VT6]─░░░░░░░░░░─[VT6]╾[VT10]...
+Carrier 3: [VT3]─░░░░░░░░░░─[VT3]╾[VT7]─░░░░░░░░░░─[VT7]╾[VT11]...
+Carrier 4: [VT4]─░░░░░░░░░░─[VT4]╾[VT8]─░░░░░░░░░░─[VT8]╾[VT12]...
+
+░ = Virtual thread blocked, carrier runs other VTs
+Result: 100 tasks complete in ~250ms (massive parallelism!)
+
+CPU-BOUND TASKS (Virtual Threads add nothing)
+─────────────────────────────────────────────
+Each task: 110ms pure compute
+
+Carrier 1: [═══════VT1═══════][═══════VT5═══════][═══════VT9════...
+Carrier 2: [═══════VT2═══════][═══════VT6═══════][═══════VT10═══...
+Carrier 3: [═══════VT3═══════][═══════VT7═══════][═══════VT11═══...
+Carrier 4: [═══════VT4═══════][═══════VT8═══════][═══════VT12═══...
+
+═ = Virtual thread computing, no yielding possible
+Result: 100 tasks complete in ~2750ms (same as 4 platform threads)
+```
+
+#### Hybrid Executor Strategy
+
+Most real applications have mixed workloads. Use the right executor for each task type:
+
+```java
+public class ComputeService {
+    // For CPU-bound work: platform threads, sized to cores
+    private final ExecutorService cpuExecutor = Executors.newFixedThreadPool(
+        Runtime.getRuntime().availableProcessors()
+    );
+
+    // For I/O-bound work: virtual threads
+    private final ExecutorService ioExecutor =
+        Executors.newVirtualThreadPerTaskExecutor();
+
+    public Result process(Request request) {
+        // Fan out I/O calls on virtual threads
+        CompletableFuture<Data> dataFuture = CompletableFuture.supplyAsync(
+            () -> fetchFromDatabase(request.id()),
+            ioExecutor
+        );
+
+        // Heavy computation on platform thread pool
+        CompletableFuture<Analysis> analysisFuture = dataFuture.thenApplyAsync(
+            data -> performHeavyAnalysis(data),  // CPU-bound
+            cpuExecutor
+        );
+
+        return analysisFuture.join();
+    }
+}
+```
+
+#### Quick Reference
+
+| Aspect                 | I/O-Bound                           | CPU-Bound                   |
+| ---------------------- | ----------------------------------- | --------------------------- |
+| Blocking points        | Many                                | None                        |
+| Can yield carrier      | Yes                                 | No                          |
+| Virtual thread benefit | Massive                             | None                        |
+| Effective parallelism  | Millions of concurrent ops          | Limited to CPU cores        |
+| Recommended executor   | `newVirtualThreadPerTaskExecutor()` | `newFixedThreadPool(cores)` |
+
+**The mental model:** Virtual threads let you scale the number of "things waiting" without cost. They don't let you scale the number of "things computing" beyond your CPU capacity.
+
 ## Internal Implementation: How Virtual Threads Work
 
 Understanding the internals helps you write better code and debug issues effectively.
@@ -161,14 +329,14 @@ Virtual threads run on top of **carrier threads**, which are platform threads ma
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                    Virtual Threads                          │
-│   VT-1 (blocked)    VT-2 (running)    VT-3 (runnable)       │
+│   VT-1 (blocked)    VT-2 (running)    VT-3 (runnable)      │
 │        │                 │                   │              │
 │        ▼                 ▼                   │              │
-│   [saved to heap]   [mounted on]             │              │
+│   [saved to heap]   [mounted on]            │              │
 │                          │                   │              │
 ├──────────────────────────┼───────────────────┼──────────────┤
 │                    Carrier Threads (ForkJoinPool)           │
-│                     [CT-1]    [CT-2]    [CT-3]              │
+│                     [CT-1]    [CT-2]    [CT-3]             │
 │                        │         │         │                │
 ├────────────────────────┼─────────┼─────────┼────────────────┤
 │                    Operating System                         │
@@ -514,4 +682,5 @@ Virtual threads don't eliminate the need to understand concurrency, but they rem
 
 ---
 
-Full example for virtual threads: [VirtualThreadExample](https://github.com/nkcoder/java-core/blob/main/src/main/java/org/nkcoder/concurrency/virtual/VirtualThreadExample.java)
+- Further reading: [Java SE 25 Core Libraries - Virtual Threads](https://docs.oracle.com/en/java/javase/25/core/virtual-threads.html#GUID-DC4306FC-D6C1-4BCC-AECE-48C32C1A8DAA)
+- Full example for virtual threads: [VirtualThreadExample](https://github.com/nkcoder/java-core/blob/main/src/main/java/org/nkcoder/concurrency/virtual/VirtualThreadExample.java)
