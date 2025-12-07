@@ -3,7 +3,7 @@
 A modern documentation and blog site built with [Nextra](https://nextra.site/) and [Next.js](https://nextjs.org/), featuring technical articles, insights, and thoughts on software development, cloud architecture, and emerging technologies.
 
 ![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)
-![Next.js](https://img.shields.io/badge/Next.js-15.x-black)
+![Next.js](https://img.shields.io/badge/Next.js-16.x-black)
 ![Nextra](https://img.shields.io/badge/Nextra-4.x-blue)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue)
 
@@ -20,9 +20,9 @@ A modern documentation and blog site built with [Nextra](https://nextra.site/) a
 
 ## 🏗️ Tech Stack
 
-- **Framework**: [Next.js 15](https://nextjs.org/) with App Router
-- **Documentation**: [Nextra 4](https://nextra.site/) with Docs Theme
-- **Styling**: [Tailwind CSS 4](https://tailwindcss.com/)
+- **Framework**: [Next.js](https://nextjs.org/) with App Router
+- **Documentation**: [Nextra](https://nextra.site/) with Docs Theme
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
 - **Language**: [TypeScript](https://www.typescriptlang.org/)
 - **Search**: [Pagefind](https://pagefind.app/) for static site search
 - **Package Manager**: [pnpm](https://pnpm.io/)
@@ -82,14 +82,18 @@ daniel-space/
 4. **Open your browser**
    Navigate to [http://localhost:3000](http://localhost:3000) to see the site.
 
-## 📋 Available Scripts
+### Available Scripts
 
-| Script        | Description                                  |
-| ------------- | -------------------------------------------- |
-| `pnpm dev`    | Start development server at `localhost:3000` |
-| `pnpm build`  | Build the application for production         |
-| `pnpm start`  | Start production server (after build)        |
-| `pnpm format` | Format code with Prettier                    |
+```bash
+# Run the local server
+auto/run
+
+// Update dependencies based on pnpm-lock.yaml
+auto/update-dep
+
+// If you want to upgrade dependencies to latest versions
+pnpm update --latest
+```
 
 ## 📖 Content Management
 
