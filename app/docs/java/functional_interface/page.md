@@ -27,7 +27,7 @@ public interface Processor {
 }
 ```
 
-## The @FunctionalInterface Annotation
+## The `@FunctionalInterface` Annotation
 
 This annotation is **optional but recommended**. It:
 
