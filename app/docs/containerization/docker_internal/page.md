@@ -3,7 +3,7 @@ title: Docker Internal
 description: Docker Internals - Understanding Containers from the Ground Up
 ---
 
-# Docker Internals: Understanding Containers from the Ground Up
+# Docker Internals
 
 Understanding what happens under the hood transforms Docker from a "magic black box" into a predictable tool you can debug, optimize, and reason about. This guide covers the core concepts that power containerization—essential knowledge for troubleshooting production issues and technical interviews.
 
