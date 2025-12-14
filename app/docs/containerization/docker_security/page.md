@@ -3,7 +3,7 @@ title: Docker Security
 description: A guide covers practical security measures to harden the docker deployments for production.
 ---
 
-# Docker Security Hardening: Production-Ready Containers
+# Docker Security
 
 Containers provide process isolation, but they're not inherently secure. A misconfigured container can expose your host system, leak secrets, or become an attack vector. This guide covers practical security measures to harden your Docker deployments for production.
 
