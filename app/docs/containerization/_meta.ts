@@ -4,7 +4,8 @@ const meta: MetaRecord = {
   dockerfile: 'Dockerfile',
   docker_compose: 'Docker Compose',
   docker_internal: 'Docker Internal',
-  docker_security: 'Docker Security'
+  docker_security: 'Docker Security',
+  docker_networking: 'DOcker Networking'
 };
 
 export default meta;
