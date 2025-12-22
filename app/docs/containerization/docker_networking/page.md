@@ -3,7 +3,7 @@ title: Docker Networking
 description: Understanding docker networking.
 ---
 
-# Docker Networking
+# Docker Networking Deep Dive
 
 Networking is where containers become useful—connecting services together, exposing APIs, and isolating components. Understanding Docker networking is essential for designing multi-service architectures and debugging connectivity issues.
 
@@ -17,39 +17,326 @@ Docker provides several network drivers for different use cases:
 ├─────────────────────────────────────────────────────────────────────┤
 │                                                                     │
 │  bridge (default)     host              none                        │
-│  ┌─────────────┐     ┌─────────────┐   ┌─────────────┐             │
-│  │ Isolated    │     │ Share host  │   │ No network  │             │
-│  │ network     │     │ network     │   │             │             │
-│  │ with NAT    │     │ directly    │   │ Fully       │             │
-│  │             │     │             │   │ isolated    │             │
-│  └─────────────┘     └─────────────┘   └─────────────┘             │
+│  ┌─────────────┐     ┌─────────────┐   ┌─────────────┐              │
+│  │ Isolated    │     │ Share host  │   │ No network  │              │
+│  │ network     │     │ network     │   │             │              │
+│  │ with NAT    │     │ directly    │   │ Fully       │              │
+│  │             │     │             │   │ isolated    │              │
+│  └─────────────┘     └─────────────┘   └─────────────┘              │
 │  Most common         Performance        Security                    │
 │                      critical           sensitive                   │
 │                                                                     │
 │  overlay              macvlan                                       │
-│  ┌─────────────┐     ┌─────────────┐                               │
-│  │ Multi-host  │     │ Direct      │                               │
-│  │ networking  │     │ physical    │                               │
-│  │ (Swarm/K8s) │     │ network     │                               │
-│  └─────────────┘     └─────────────┘                               │
+│  ┌─────────────┐     ┌─────────────┐                                │
+│  │ Multi-host  │     │ Direct      │                                │
+│  │ networking  │     │ physical    │                                │
+│  │ (Swarm/K8s) │     │ network     │                                │
+│  └─────────────┘     └─────────────┘                                │
 │  Orchestration       Legacy/special                                 │
 │                                                                     │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
-| Driver      | Use Case                                  | Isolation       | Performance |
-| ----------- | ----------------------------------------- | --------------- | ----------- |
-| **bridge**  | Default, single-host containers           | Container-level | Good        |
-| **host**    | Performance-critical, no isolation needed | None            | Best        |
-| **none**    | Security-sensitive, no network needed     | Complete        | N/A         |
-| **overlay** | Multi-host (Swarm, Kubernetes)            | Container-level | Good        |
-| **macvlan** | Containers need physical network IPs      | Network-level   | Good        |
+### Bridge Network (Default)
 
-For most use cases, you'll use **bridge** networking. Let's dive deep into how it works.
+The bridge driver creates an isolated network on a single host. Containers on the same bridge can communicate; external access requires port mapping.
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│ Bridge Network                                                      │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│   Container A ◄───────────────────────► Container B                 │
+│        │            Bridge network            │                     │
+│        │           (172.18.0.0/16)           │                      │
+│        │                                      │                     │
+│        └──────────────┬───────────────────────┘                     │
+│                       │                                             │
+│                      NAT                                            │
+│                       │                                             │
+│                  Host Network                                       │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+**Use Cases:**
+
+- Local development environments
+- Multi-container applications on a single host
+- Microservices that need to communicate with each other
+- Any scenario requiring network isolation between container groups
+
+**Best Practices:**
+
+- Always use user-defined bridge networks, not the default `bridge` (enables DNS resolution by container name)
+- Create separate networks for different application tiers (frontend, backend, database)
+- Don't expose ports unless necessary—containers on the same network can communicate without port publishing
+
+```bash
+# Create a user-defined bridge network
+$ docker network create --driver bridge my-app-network
+
+# Run containers on the network
+$ docker run -d --name api --network my-app-network my-api
+$ docker run -d --name db --network my-app-network postgres:16-alpine
+
+# api can reach db via hostname "db" - no port publishing needed
+```
+
+### Host Network
+
+The host driver removes network isolation—the container shares the host's network namespace directly. No NAT, no port mapping, no separate IP.
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│ Host Network                                                        │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│   Host (192.168.1.100)                                              │
+│   ┌───────────────────────────────────────────────────────────┐     │
+│   │                                                           │     │
+│   │   Container (--network host)                              │     │
+│   │   Shares host's network directly                          │     │
+│   │   No separate IP, no NAT                                  │     │
+│   │   Listens on host's 192.168.1.100:8080                    │     │
+│   │                                                           │     │
+│   └───────────────────────────────────────────────────────────┘     │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+**Use Cases:**
+
+- Performance-critical applications where NAT overhead matters (high-throughput networking)
+- Applications that need to bind to many dynamic ports (e.g., FTP servers)
+- Containers that need to see the real client IP without proxy headers
+- Network monitoring/debugging tools that need raw network access
+
+**Best Practices:**
+
+- Use sparingly—you lose container network isolation
+- Avoid in production unless you have a specific performance requirement
+- Be aware of port conflicts with host services
+- Not available on Docker Desktop (Mac/Windows)—only works on Linux
+
+```bash
+# Run with host networking
+$ docker run -d --network host nginx
+# nginx is now accessible at host's IP:80, not container IP
+
+# Useful for network debugging tools
+$ docker run --rm --network host nicolaka/netshoot tcpdump -i eth0
+```
+
+**When NOT to use:**
+
+- Multi-tenant environments (no isolation)
+- When running multiple instances of the same service (port conflicts)
+- On Docker Desktop (doesn't work as expected)
+
+### None Network
+
+The none driver provides complete network isolation—no network interface except loopback.
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│ None Network                                                        │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│   Container                                                         │
+│   ┌───────────────────────────────────────────────────────────┐     │
+│   │                                                           │     │
+│   │   Only loopback (127.0.0.1)                               │     │
+│   │   No external network access                              │     │
+│   │   Cannot communicate with other containers                │     │
+│   │   Cannot access internet                                  │     │
+│   │                                                           │     │
+│   └───────────────────────────────────────────────────────────┘     │
+│                                                                     │
+│   ✗ No connection to host network                                   │
+│   ✗ No connection to other containers                               │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+**Use Cases:**
+
+- Batch processing jobs that don't need network access
+- Security-sensitive workloads that must be isolated
+- Containers that only process local files
+- Cryptographic operations or secret generation
+
+**Best Practices:**
+
+- Use for maximum security when network access isn't required
+- Combine with read-only filesystem for defense in depth
+- Useful for running untrusted code in isolation
+
+```bash
+# Run with no network
+$ docker run --rm --network none alpine ping google.com
+# ping: bad address 'google.com' - no network access
+
+# Process files without network access
+$ docker run --rm --network none -v $(pwd)/data:/data my-processor
+```
+
+### Overlay Network
+
+The overlay driver enables communication between containers across multiple Docker hosts. Used primarily with Docker Swarm or Kubernetes.
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│ Overlay Network                                                     │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│   Host A                              Host B                        │
+│   ┌─────────────────────┐            ┌─────────────────────┐        │
+│   │ Container 1         │            │ Container 2         │        │
+│   │ (10.0.0.2)         │            │ (10.0.0.3)         │          │
+│   └─────────┬───────────┘            └─────────┬───────────┘        │
+│             │                                  │                    │
+│             └──────────────┬───────────────────┘                    │
+│                            │                                        │
+│                    Overlay Network                                  │
+│                    (VXLAN tunnel)                                   │
+│                    (10.0.0.0/24)                                    │
+│                                                                     │
+│   Containers communicate as if on the same network                  │
+│   even though they're on different physical hosts                   │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+**Use Cases:**
+
+- Docker Swarm services that span multiple nodes
+- Multi-host container orchestration
+- Kubernetes networking (via CNI plugins)
+- Distributed applications requiring cross-host communication
+
+**Best Practices:**
+
+- Use with Docker Swarm or Kubernetes, not standalone containers
+- Enable encryption for sensitive traffic (`--opt encrypted`)
+- Plan your subnet allocation to avoid conflicts
+- For single-host development, bridge networks are simpler
+
+```bash
+# Create an encrypted overlay network (requires Swarm mode)
+$ docker network create --driver overlay --opt encrypted my-overlay
+
+# For most local development, you don't need overlay networks
+# Use bridge networks instead
+```
+
+**When NOT to use:**
+
+- Single-host deployments (use bridge instead)
+- Local development environments
+- When not using Docker Swarm or Kubernetes
+
+### Macvlan Network
+
+The macvlan driver assigns a MAC address to each container, making it appear as a physical device on your network. Containers get IPs directly from your physical network.
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│ Macvlan Network                                                     │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│   Physical Network (192.168.1.0/24)                                 │
+│   ┌─────────────────────────────────────────────────────────────┐   │
+│   │                                                             │   │
+│   │   Router          Host              Container               │   │
+│   │   192.168.1.1     192.168.1.100     192.168.1.50            │   │
+│   │        │               │                 │                  │   │
+│   │        └───────────────┴─────────────────┘                  │   │
+│   │                                                             │   │
+│   │   Container appears as a physical device on the LAN         │   │
+│   │   with its own MAC address and IP                           │   │
+│   │                                                             │   │
+│   └─────────────────────────────────────────────────────────────┘   │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+**Use Cases:**
+
+- Legacy applications that expect to be on the physical network
+- Applications that need to be accessible via LAN without port forwarding
+- Migrating from VMs to containers (same network behavior)
+- IoT or embedded systems that need direct network access
+
+**Best Practices:**
+
+- Use only when you need containers to have IPs on your physical network
+- Requires network infrastructure that supports multiple MAC addresses per port
+- Plan IP allocation carefully to avoid conflicts
+- Note: container cannot communicate with host via macvlan interface (Linux kernel limitation)
+
+```bash
+# Create a macvlan network
+$ docker network create -d macvlan \
+    --subnet=192.168.1.0/24 \
+    --gateway=192.168.1.1 \
+    -o parent=eth0 \
+    my-macvlan
+
+# Container gets an IP on your physical network
+$ docker run -d --network my-macvlan --ip 192.168.1.50 nginx
+```
+
+**When NOT to use:**
+
+- Cloud environments (usually not supported by cloud providers)
+- When bridge networking meets your needs
+- Docker Desktop (not supported on Mac/Windows)
+
+### Network Driver Comparison
+
+| Driver      | Isolation       | Performance | Multi-Host | Complexity | Use Case                              |
+| ----------- | --------------- | ----------- | ---------- | ---------- | ------------------------------------- |
+| **bridge**  | Container-level | Good        | No         | Low        | Default, local dev, most applications |
+| **host**    | None            | Best        | No         | Low        | Performance-critical, network tools   |
+| **none**    | Complete        | N/A         | No         | Low        | Security-sensitive, batch jobs        |
+| **overlay** | Container-level | Good        | Yes        | Medium     | Swarm/K8s, distributed apps           |
+| **macvlan** | Network-level   | Good        | No         | Medium     | Legacy apps, direct LAN access        |
+
+### Quick Decision Guide
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│ Which Network Driver Should I Use?                                  │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│   Start here: Do you need network access?                           │
+│                    │                                                │
+│            ┌──────┴──────┐                                         │
+│            No            Yes                                        │
+│            │              │                                         │
+│            ▼              ▼                                         │
+│         "none"     Single host or multi-host?                       │
+│                           │                                         │
+│                   ┌───────┴───────┐                                │
+│              Single host     Multi-host                             │
+│                   │              │                                  │
+│                   ▼              ▼                                  │
+│        Need max performance?  "overlay"                             │
+│                   │         (with Swarm/K8s)                       │
+│           ┌──────┴──────┐                                          │
+│           No            Yes                                         │
+│           │              │                                          │
+│           ▼              ▼                                          │
+│       "bridge"       "host"                                         │
+│    (user-defined)  (Linux only)                                    │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘
+```
 
 ## Bridge Networking Internals
 
-When you install Docker, it creates a default bridge network called `bridge` (shown as `docker0` on the host):
+When you install Docker, it creates a default bridge network called `bridge` (shown as `docker0` on Linux hosts):
 
 ```bash
 $ docker network ls
@@ -57,7 +344,12 @@ NETWORK ID     NAME      DRIVER    SCOPE
 a1b2c3d4e5f6   bridge    bridge    local
 f6e5d4c3b2a1   host      host      local
 1a2b3c4d5e6f   none      null      local
+```
 
+**Note:** The following `ip` commands are Linux-specific. On macOS/Windows, Docker runs inside a Linux VM, so you won't see `docker0` on your host. You can still inspect networks using `docker network inspect`.
+
+```bash
+# Linux only: view the docker0 bridge interface
 $ ip link show docker0
 3: docker0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 ...
     link/ether 02:42:ac:11:00:01 brd ff:ff:ff:ff:ff:ff
@@ -72,38 +364,38 @@ When a container starts on a bridge network, Docker:
 3. Attaches the other end to the bridge (`docker0`)
 
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│ Bridge Network Architecture                                         │
-├─────────────────────────────────────────────────────────────────────┤
-│                                                                     │
-│   Host                                                              │
-│   ┌───────────────────────────────────────────────────────────┐    │
-│   │                                                           │    │
-│   │   Container A           Container B                       │    │
-│   │   ┌───────────┐        ┌───────────┐                     │    │
-│   │   │   eth0    │        │   eth0    │                     │    │
-│   │   │172.17.0.2 │        │172.17.0.3 │                     │    │
-│   │   └─────┬─────┘        └─────┬─────┘                     │    │
-│   │         │ veth              │ veth                       │    │
-│   │         │                    │                            │    │
-│   │   ┌─────┴────────────────────┴─────┐                     │    │
-│   │   │         docker0 bridge         │                     │    │
-│   │   │          172.17.0.1            │                     │    │
-│   │   └─────────────┬──────────────────┘                     │    │
-│   │                 │                                         │    │
-│   │                 │ NAT (iptables)                         │    │
-│   │                 │                                         │    │
-│   │   ┌─────────────┴──────────────────┐                     │    │
-│   │   │          eth0 (host)           │                     │    │
-│   │   │         192.168.1.100          │                     │    │
-│   │   └────────────────────────────────┘                     │    │
-│   │                                                           │    │
-│   └───────────────────────────────────────────────────────────┘    │
-│                         │                                           │
-│                         ▼                                           │
-│                    Physical Network                                 │
-│                                                                     │
-└─────────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────┐
+│ Bridge Network Architecture                                      │
+├──────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│   Host                                                           │
+│   ┌──────────────────────────────────────────────────────────┐  │
+│   │                                                          │  │
+│   │   Container A           Container B                      │  │
+│   │   ┌───────────┐        ┌───────────┐                    │  │
+│   │   │   eth0    │        │   eth0    │                    │  │
+│   │   │172.17.0.2 │        │172.17.0.3 │                    │  │
+│   │   └─────┬─────┘        └─────┬─────┘                    │  │
+│   │         │ veth              │ veth                      │  │
+│   │         │                    │                           │  │
+│   │   ┌─────┴────────────────────┴─────┐                    │  │
+│   │   │         docker0 bridge         │                    │  │
+│   │   │          172.17.0.1            │                    │  │
+│   │   └─────────────┬──────────────────┘                    │  │
+│   │                 │                                        │  │
+│   │                 │ NAT (iptables)                        │  │
+│   │                 │                                        │  │
+│   │   ┌─────────────┴──────────────────┐                    │  │
+│   │   │          eth0 (host)           │                    │  │
+│   │   │         192.168.1.100          │                    │  │
+│   │   └────────────────────────────────┘                    │  │
+│   │                                                          │  │
+│   └──────────────────────────────────────────────────────────┘  │
+│                         │                                        │
+│                         ▼                                        │
+│                    Physical Network                              │
+│                                                                  │
+└──────────────────────────────────────────────────────────────────┘
 ```
 
 ### Viewing Container Network Configuration
@@ -112,7 +404,7 @@ When a container starts on a bridge network, Docker:
 # Start a container
 $ docker run -d --name web nginx
 
-# View container's IP address
+# View container's IP address (works on all platforms)
 $ docker inspect web --format '{{.NetworkSettings.IPAddress}}'
 172.17.0.2
 
@@ -121,7 +413,7 @@ $ docker exec web ip addr show eth0
 47: eth0@if48: <BROADCAST,MULTICAST,UP,LOWER_UP> ...
     inet 172.17.0.2/16 brd 172.17.255.255 scope global eth0
 
-# View the veth pair on the host
+# Linux only: view the veth pair on the host
 $ ip link show | grep veth
 48: vethc3d4e5f@if47: <BROADCAST,MULTICAST,UP,LOWER_UP> ...
 ```
@@ -453,11 +745,17 @@ $ docker run --network host nginx
 
 ## Connecting to Host Services
 
-Sometimes containers need to access services running on the host machine (e.g., a database running locally, IDE debugger).
+Sometimes containers need to access services running on the host machine (e.g., a database running locally, an IDE debugger).
 
-### Docker Desktop (Mac/Windows)
+### The Problem
 
-Docker Desktop provides a special DNS name:
+Containers have their own network namespace. `localhost` inside a container refers to the container itself, not your host machine. You need a way to address the host from within a container.
+
+### Solution: host.docker.internal
+
+Docker provides a special DNS name `host.docker.internal` that resolves to the host machine's IP address.
+
+**Docker Desktop (Mac/Windows):** Works out of the box.
 
 ```bash
 $ docker run --rm alpine ping host.docker.internal
@@ -465,21 +763,15 @@ PING host.docker.internal (192.168.65.254): 56 data bytes
 64 bytes from 192.168.65.254: seq=0 ttl=64 time=0.456 ms
 ```
 
-```yaml
-# compose.yml
-services:
-  api:
-    environment:
-      # Connect to service running on host
-      DATABASE_URL: postgres://host.docker.internal:5432/mydb
+**Linux (Docker Engine 20.10+):** Requires explicit configuration using `host-gateway`:
+
+```bash
+# CLI
+$ docker run --rm --add-host=host.docker.internal:host-gateway alpine ping host.docker.internal
 ```
 
-### Linux
-
-On Linux, `host.docker.internal` doesn't exist by default. Add it manually:
-
 ```yaml
-# compose.yml
+# compose.yml (works on all platforms)
 services:
   api:
     extra_hosts:
@@ -488,7 +780,9 @@ services:
       DATABASE_URL: postgres://host.docker.internal:5432/mydb
 ```
 
-Or use host network mode, or the host's actual IP address.
+The `host-gateway` is a special value that Docker resolves to the host's gateway IP (typically `172.17.0.1` for the default bridge).
+
+**Tip:** For cross-platform compatibility, always include the `extra_hosts` configuration—it works on all platforms and makes your Compose files portable.
 
 ## Debugging Network Issues
 
