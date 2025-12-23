@@ -13,23 +13,23 @@ Running containers in production requires understanding resource management, per
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│ Resource Management: Where It's Configured                         │
+│ Resource Management: Where It's Configured                          │
 ├─────────────────────────────────────────────────────────────────────┤
 │                                                                     │
 │   Local Development              Production                         │
-│   ┌─────────────────────┐       ┌─────────────────────────────┐   │
-│   │                     │       │                             │   │
-│   │  docker run         │       │  ECS Task Definition        │   │
-│   │    --memory=512m    │       │    "memory": 512            │   │
-│   │    --cpus=2         │       │    "cpu": 256               │   │
-│   │                     │       │                             │   │
-│   │  docker-compose.yml │       │  Kubernetes Pod Spec        │   │
-│   │    deploy:          │       │    resources:               │   │
-│   │      resources:     │       │      limits:                │   │
-│   │        limits:      │       │        memory: "512Mi"      │   │
-│   │          memory: 512M│      │        cpu: "2"             │   │
-│   │                     │       │                             │   │
-│   └─────────────────────┘       └─────────────────────────────┘   │
+│   ┌─────────────────────-┐       ┌─────────────────────────────┐   │
+│   │                      │       │                             │   │
+│   │  docker run          │       │  ECS Task Definition        │   │
+│   │    --memory=512m     │       │    "memory": 512            │   │
+│   │    --cpus=2          │       │    "cpu": 256               │   │
+│   │                      │       │                             │   │
+│   │  docker-compose.yml  │       │  Kubernetes Pod Spec        │   │
+│   │    deploy:           │       │    resources:               │   │
+│   │      resources:      │       │      limits:                │   │
+│   │        limits:       │       │        memory: "512Mi"      │   │
+│   │          memory: 512M│       │        cpu: "2"             │   │
+│   │                      │       │                             │   │
+│   └─────────────────────-┘       └─────────────────────────────┘   │
 │                                                                     │
 └─────────────────────────────────────────────────────────────────────┘
 ```
@@ -192,14 +192,14 @@ By default, Go sets `GOMAXPROCS` to the number of CPUs visible to the process. I
 │ GOMAXPROCS Problem                                                  │
 ├─────────────────────────────────────────────────────────────────────┤
 │                                                                     │
-│   Host: 8 CPU cores                                                │
-│   Container limit: --cpus=2                                        │
+│   Host: 8 CPU cores                                                 │
+│   Container limit: --cpus=2                                         │
 │                                                                     │
-│   Go app sees: runtime.NumCPU() = 8                                │
-│   Go sets: GOMAXPROCS = 8                                          │
+│   Go app sees: runtime.NumCPU() = 8                                 │
+│   Go sets: GOMAXPROCS = 8                                           │
 │                                                                     │
-│   Result: 8 OS threads competing for 2 cores worth of CPU time     │
-│           = excessive context switching, poor performance          │
+│   Result: 8 OS threads competing for 2 cores worth of CPU time      │
+│           = excessive context switching, poor performance           │
 │                                                                     │
 └─────────────────────────────────────────────────────────────────────┘
 ```
@@ -702,46 +702,46 @@ $ kubectl describe pod my-pod | grep -A10 "Liveness\|Readiness"
 │          ▼                                                          │
 │   Check logs (CloudWatch / kubectl logs --previous)                 │
 │          │                                                          │
-│          ├── Exit code 137?                                        │
-│          │      └── OOM killed → Increase memory limit             │
+│          ├── Exit code 137?                                         │
+│          │      └── OOM killed → Increase memory limit              │
 │          │                                                          │
-│          ├── Exit code 1?                                          │
-│          │      └── App error → Fix bug, check config              │
+│          ├── Exit code 1?                                           │
+│          │      └── App error → Fix bug, check config               │
 │          │                                                          │
-│          └── Exit code 143?                                        │
-│                 └── SIGTERM → Check graceful shutdown handling     │
+│          └── Exit code 143?                                         │
+│                 └── SIGTERM → Check graceful shutdown handling      │
 │                                                                     │
-│   ─────────────────────────────────────────────────────────────    │
+│   ─────────────────────────────────────────────────────────────     │
 │                                                                     │
-│   Slow performance?                                                │
+│   Slow performance?                                                 │
 │          │                                                          │
 │          ▼                                                          │
 │   Check metrics (Container Insights / kubectl top)                  │
 │          │                                                          │
-│          ├── CPU at limit?                                         │
-│          │      └── Throttled → Increase CPU or optimize code     │
+│          ├── CPU at limit?                                          │
+│          │      └── Throttled → Increase CPU or optimize code       │
 │          │                                                          │
-│          ├── Memory near limit?                                    │
-│          │      └── GC pressure → Increase limit or tune GOMEMLIMIT│
+│          ├── Memory near limit?                                     │
+│          │      └── GC pressure → Increase limit or tune GOMEMLIMIT │
 │          │                                                          │
-│          └── Resources OK?                                         │
-│                 └── Check latency → Profile app, check dependencies│
+│          └── Resources OK?                                          │
+│                 └── Check latency → Profile app, check dependencies │
 │                                                                     │
-│   ─────────────────────────────────────────────────────────────    │
+│   ─────────────────────────────────────────────────────────────     │
 │                                                                     │
-│   Health check failing?                                            │
+│   Health check failing?                                             │
 │          │                                                          │
 │          ▼                                                          │
-│   Check health endpoint manually (ECS Exec / kubectl exec)         │
+│   Check health endpoint manually (ECS Exec / kubectl exec)          │
 │          │                                                          │
-│          ├── Endpoint not responding?                              │
-│          │      └── App not started → Increase startPeriod        │
+│          ├── Endpoint not responding?                               │
+│          │      └── App not started → Increase startPeriod          │
 │          │                                                          │
-│          ├── Timeout?                                              │
-│          │      └── Slow response → Increase timeout or optimize  │
+│          ├── Timeout?                                               │
+│          │      └── Slow response → Increase timeout or optimize   .|
 │          │                                                          │
-│          └── Wrong port/path?                                      │
-│                 └── Fix health check configuration                 │
+│          └── Wrong port/path?                                       │
+│                 └── Fix health check configuration                  │
 │                                                                     │
 └─────────────────────────────────────────────────────────────────────┘
 ```
