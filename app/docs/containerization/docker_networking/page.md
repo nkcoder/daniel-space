@@ -1,6 +1,7 @@
 ---
 title: Docker Networking
 description: Understanding docker networking.
+date: 2025-12-22
 ---
 
 # Docker Networking Deep Dive

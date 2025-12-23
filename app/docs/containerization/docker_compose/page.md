@@ -1,6 +1,7 @@
 ---
 title: Docker Compose
 description: Comprehensive guide on writing docker compose file
+date: 2025-12-11
 ---
 
 # Docker Compose

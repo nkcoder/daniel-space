@@ -1,6 +1,7 @@
 ---
 title: Dockerfile guide
 description: Comprehensive guide on writing production-grade dockerfiles
+date: 2025-12-11
 ---
 
 # Dockerfile

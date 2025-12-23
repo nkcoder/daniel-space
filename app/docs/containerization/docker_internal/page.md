@@ -1,6 +1,7 @@
 ---
 title: Docker Internal
 description: Docker Internals - Understanding Containers from the Ground Up
+date: 2025-12-12
 ---
 
 # Docker Internals

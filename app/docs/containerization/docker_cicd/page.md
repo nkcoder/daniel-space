@@ -1,6 +1,7 @@
 ---
 title: Docker in CI/CD
 description: Building production-ready CI/CD pipelines using Github Actions using docker
+date: 2025-12-22
 ---
 
 # Docker in CI/CD

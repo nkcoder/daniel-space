@@ -1,6 +1,7 @@
 ---
 title: Docker Performance & Troubleshooting
 description: Understanding resource management, performance tunning and systematic debugging for dockers running in production.
+date: 2025-12-23
 ---
 
 # Docker Performance & Troubleshooting

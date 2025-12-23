@@ -1,6 +1,7 @@
 ---
 title: Docker Security
 description: A guide covers practical security measures to harden the docker deployments for production.
+date: 2025-12-14
 ---
 
 # Docker Security
