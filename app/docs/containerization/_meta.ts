@@ -6,7 +6,8 @@ const meta: MetaRecord = {
   docker_internal: 'Docker Internal',
   docker_security: 'Docker Security',
   docker_networking: 'DOcker Networking',
-  docker_cicd: 'Docker CI/CD'
+  docker_cicd: 'Docker CI/CD',
+  docker_perf_debug: 'Docker Performance & Debugging'
 };
 
 export default meta;
