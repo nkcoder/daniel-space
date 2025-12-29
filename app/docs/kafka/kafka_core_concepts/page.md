@@ -987,20 +987,6 @@ bin/kafka-topics.sh --bootstrap-server localhost:9092 \
 
 7. **Partition count is permanent:** You can increase partitions but never decrease them — choose wisely based on throughput and parallelism needs.
 
----
-
-## What's Next?
-
-In **Blog 3: Producers Deep Dive — Reliable Message Publishing**, we'll explore:
-
-- Producer architecture: RecordAccumulator, Sender thread, batching
-- Delivery semantics: `acks`, idempotence, and transactions
-- Serialization strategies with Avro and Protobuf
-- Performance tuning: batching, compression, and throughput optimization
-- Error handling patterns and dead letter queues
-
----
-
 ## References
 
 - [Kafka Documentation: Design](https://kafka.apache.org/documentation/#design)
