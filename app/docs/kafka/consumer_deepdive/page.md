@@ -3,7 +3,7 @@ title: Kafka Consumer Deep Dive
 description: Kafka Consumer Deep Dive including Groups, Rebalancing & The New Protocol
 ---
 
-# Kafka Consumer Deep Dive: Groups, Rebalancing & The New Protocol
+# Kafka Consumer Deep Dive
 
 The Kafka Consumer appears straightforward—subscribe, poll, process. But production systems demand understanding of consumer groups, rebalancing dynamics, offset management, and now in Kafka 4.x, an entirely new consumer protocol. This post explores these mechanisms in depth.
 
