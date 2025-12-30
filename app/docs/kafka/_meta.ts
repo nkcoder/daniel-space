@@ -3,7 +3,8 @@ import { MetaRecord } from 'nextra';
 const meta: MetaRecord = {
   start_local_kafka: 'Start Local Kafka',
   kafka_introduction: 'Introduction to kafka',
-  kafka_core_concepts: 'Kafka Core Concepts'
+  kafka_core_concepts: 'Kafka Core Concepts',
+  producer_deepdive: 'Kafka Producer Deep Dive'
 };
 
 export default meta;
