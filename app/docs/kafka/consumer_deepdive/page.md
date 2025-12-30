@@ -549,4 +549,5 @@ kafka-consumer-groups.sh \
 ## Reference
 
 - [Kafka Design](https://kafka.apache.org/41/design/design/#the-consumer)
+- [Consumer Configs](https://kafka.apache.org/41/configuration/consumer-configs/)
 - [Kafka Consumers: Reading and Reacting to Event Streams](https://developer.confluent.io/courses/apache-kafka/consumers/?utm_medium=sem&utm_source=google&utm_campaign=ch.sem_br.nonbrand_tp.prs_tgt.kafka_mt.xct_rgn.apac_sbrgn.aunz_lng.eng_dv.all_con.kafka-consumer_term.kafka-consumer&utm_term=kafka%20consumer&creative=&device=c&placement=&gad_source=1&gad_campaignid=22120623753&gbraid=0AAAAADRv2c2xJ0veS7y5_Ra-MQv8mgJQe&gclid=CjwKCAiAjc7KBhBvEiwAE2BDOZgHLLP3Uv4NlGeO8wcxV9WdE4w_wgwwLynPQwl2Oc31Qnf9hiI9BBoCdjIQAvD_BwE)
