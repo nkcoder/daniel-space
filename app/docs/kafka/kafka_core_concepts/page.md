@@ -75,39 +75,60 @@ Replicating an append-only log is straightforward: followers simply fetch and ap
 
 Because records are never deleted immediately, consumers can "rewind" and reprocess historical data. This enables powerful patterns like event sourcing and stream replay.
 
-### The Record Format
+---
 
-Each record in Kafka contains:
+## Brokers and Cluster Architecture
+
+A single Kafka server is called a **Kafka broker**. An ensemble of Kafka brokers working together is called a **Kafka cluster**. Each broker in a cluster is identified by a unique numeric ID.
 
 ```
 ┌────────────────────────────────────────────────────────────────┐
-│                      Kafka Record Structure                     │
+│                      Kafka Cluster                              │
 ├────────────────────────────────────────────────────────────────┤
 │                                                                  │
-│  ┌──────────────────────────────────────────────────────────┐   │
-│  │                     Record Batch                          │   │
-│  │  ┌────────────────────────────────────────────────────┐  │   │
-│  │  │ Base Offset        │ Batch Length    │ Magic       │  │   │
-│  │  │ CRC                │ Attributes      │ Timestamp   │  │   │
-│  │  │ Producer ID        │ Producer Epoch  │ Base Seq    │  │   │
-│  │  ├────────────────────────────────────────────────────┤  │   │
-│  │  │                    Records[]                        │  │   │
-│  │  │  ┌─────────────────────────────────────────────┐   │  │   │
-│  │  │  │ Length │ Attrs │ Timestamp Delta │ Offset Δ │   │  │   │
-│  │  │  │ Key    │ Value │ Headers[]                  │   │  │   │
-│  │  │  └─────────────────────────────────────────────┘   │  │   │
-│  │  └────────────────────────────────────────────────────┘  │   │
-│  └──────────────────────────────────────────────────────────┘   │
-│                                                                  │
-│  Key Fields:                                                     │
-│  • Offset: Unique, sequential identifier within a partition      │
-│  • Timestamp: Event time or ingestion time                       │
-│  • Key: Optional; used for partitioning and compaction           │
-│  • Value: The actual message payload                             │
-│  • Headers: Optional key-value metadata                          │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐          │
+│  │   Broker 1   │  │   Broker 2   │  │   Broker 3   │          │
+│  │   (id: 1)    │  │   (id: 2)    │  │   (id: 3)    │          │
+│  │              │  │              │  │              │          │
+│  │ ┌──────────┐ │  │ ┌──────────┐ │  │ ┌──────────┐ │          │
+│  │ │Partitions│ │  │ │Partitions│ │  │ │Partitions│ │          │
+│  │ └──────────┘ │  │ └──────────┘ │  │ └──────────┘ │          │
+│  └──────────────┘  └──────────────┘  └──────────────┘          │
+│         ▲                 ▲                 ▲                   │
+│         │                 │                 │                   │
+│         └─────────────────┼─────────────────┘                   │
+│                           │                                      │
+│                    ┌──────┴──────┐                               │
+│                    │   Clients   │                               │
+│                    │ (Producers/ │                               │
+│                    │  Consumers) │                               │
+│                    └─────────────┘                               │
 │                                                                  │
 └────────────────────────────────────────────────────────────────┘
 ```
+
+### Bootstrap Servers
+
+Every broker in the cluster has metadata about all other brokers:
+
+- Any broker in the cluster is also called a **bootstrap server**
+- A client can connect to any broker to get metadata about the entire cluster
+- In practice, it is common for Kafka clients to connect to multiple bootstrap servers to ensure high availability and fault tolerance
+
+```scala
+// Connecting to multiple bootstrap servers for fault tolerance
+props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG,
+  "broker1:9092,broker2:9092,broker3:9092")
+```
+
+### Broker Responsibilities
+
+Each broker handles:
+
+- **Storage:** Persisting partition data to disk
+- **Replication:** Serving as leader or follower for partitions
+- **Client requests:** Handling produce and fetch requests
+- **Cluster coordination:** Participating in leader election and metadata management
 
 ---
 
@@ -247,13 +268,17 @@ While topics provide logical organization, **partitions** are where the real wor
 
 Records are assigned to partitions based on their **key**:
 
-```scala
-// Default partitioner behavior (Kafka 2.4+)
-partition =
-  if (key == null)
-    stickyPartition()  // Batch to same partition, then switch
-  else
-    murmur2(key) % numPartitions
+```
+┌────────────────────────────────────────────────────────────────┐
+│                 Partition Assignment Logic                      │
+├────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  if (key == null)                                               │
+│      partition = stickyPartition()  // Batch, then switch       │
+│  else                                                           │
+│      partition = hash(key) % numPartitions                      │
+│                                                                  │
+└────────────────────────────────────────────────────────────────┘
 ```
 
 **Key-based partitioning guarantees:**
@@ -307,12 +332,6 @@ The partition count decision involves several trade-offs:
 │                                                                  │
 │  Where partition_throughput ≈ 10-50 MB/s depending on hardware  │
 │                                                                  │
-│  Example:                                                        │
-│  • Expected throughput: 500 MB/s                                 │
-│  • Partition throughput: 50 MB/s                                 │
-│  • Expected consumers: 20                                        │
-│  • Partitions = max(500/50, 20) = max(10, 20) = 20              │
-│                                                                  │
 │  ⚠️  You can increase partitions later, but NOT decrease them    │
 │                                                                  │
 └────────────────────────────────────────────────────────────────┘
@@ -350,9 +369,236 @@ Uneven key distribution leads to "hot" partitions:
 
 ---
 
+## Producers: Writing Data to Kafka
+
+Applications that send data into topics are called **Kafka producers**. A producer sends messages to a topic, and messages are distributed across the topic's partitions.
+
+### Message Structure
+
+Each Kafka message (record) contains:
+
+```
+┌────────────────────────────────────────────────────────────────┐
+│                      Kafka Record Structure                     │
+├────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  ┌──────────────────────────────────────────────────────────┐   │
+│  │                     Record Batch                          │   │
+│  │  ┌────────────────────────────────────────────────────┐  │   │
+│  │  │ Base Offset        │ Batch Length    │ Magic       │  │   │
+│  │  │ CRC                │ Attributes      │ Timestamp   │  │   │
+│  │  │ Producer ID        │ Producer Epoch  │ Base Seq    │  │   │
+│  │  ├────────────────────────────────────────────────────┤  │   │
+│  │  │                    Records[]                        │  │   │
+│  │  │  ┌─────────────────────────────────────────────┐   │  │   │
+│  │  │  │ Length │ Attrs │ Timestamp Delta │ Offset Δ │   │  │   │
+│  │  │  │ Key    │ Value │ Headers[]                  │   │  │   │
+│  │  │  └─────────────────────────────────────────────┘   │  │   │
+│  │  └────────────────────────────────────────────────────┘  │   │
+│  └──────────────────────────────────────────────────────────┘   │
+│                                                                  │
+│  Key Fields:                                                     │
+│  • Key: Optional; used for partitioning and compaction           │
+│  • Value: The actual message payload                             │
+│  • Headers: Optional key-value metadata                          │
+│  • Timestamp: Event time or ingestion time                       │
+│                                                                  │
+└────────────────────────────────────────────────────────────────┘
+```
+
+### Message Keys
+
+Each message contains an optional key and a value:
+
+- If the key is **not specified**, messages are sent in a round-robin fashion (with sticky partitioning for batching efficiency)
+- If the key is **specified**, the message is sent to the partition determined by hashing the key; all messages with the same key go to the same partition
+- A key can be anything: a string, a number, or a complex object serialized to bytes
+
+Message keys are commonly used when there is a need for message ordering for all messages sharing the same field (e.g., all events for a specific user).
+
+### Producer Acknowledgments (acks)
+
+For a message to be successfully written, the producer must specify a level of acknowledgment:
+
+```
+┌────────────────────────────────────────────────────────────────┐
+│                    Producer Acknowledgments                     │
+├────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  acks=0 (Fire and Forget)                                       │
+│  ─────────────────────────                                      │
+│  Producer ──► Broker                                            │
+│  • No acknowledgment waited                                     │
+│  • Highest throughput, possible data loss                       │
+│                                                                  │
+│  acks=1 (Leader Only)                                           │
+│  ────────────────────                                           │
+│  Producer ──► Leader ──► ACK                                    │
+│  • Leader acknowledges write                                    │
+│  • Data loss possible if leader fails before replication        │
+│                                                                  │
+│  acks=all (-1) (Full ISR)                                       │
+│  ────────────────────────                                       │
+│  Producer ──► Leader ──► Followers ──► ACK                      │
+│  • All in-sync replicas must acknowledge                        │
+│  • Strongest durability guarantee                               │
+│  • Use with min.insync.replicas > 1                             │
+│                                                                  │
+└────────────────────────────────────────────────────────────────┘
+```
+
+### Message Serialization
+
+Kafka messages are serialized into binary format (byte array) before being sent. Common serializers include:
+
+- `StringSerializer` - for string keys/values
+- `ByteArraySerializer` - for raw bytes
+- `JsonSerializer` - for JSON objects
+- `AvroSerializer` / `ProtobufSerializer` - for schema-based serialization
+
+The serialization format of a topic should not change during its lifetime. Create a new topic if the format needs to change.
+
+---
+
+## Consumers and Consumer Groups
+
+Applications that read data from topics are called **Kafka consumers**.
+
+### Consumer Basics
+
+- Consumers read from one or more partitions at a time
+- Data is read **in order within each partition**
+- A consumer always reads from a lower offset to a higher offset (cannot read backwards)
+- Consumers use the **pull model**: they request data when ready, rather than being pushed data
+
+By default, consumers only consume data produced after they first connected. However, they can be configured to read from the beginning or from a specific offset.
+
+### Consumer Groups
+
+A **consumer group** is a group of consumers that work together to consume messages from one or more topics. Each consumer in the group reads from a unique set of partitions:
+
+```
+┌────────────────────────────────────────────────────────────────┐
+│                    Consumer Group Example                       │
+├────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  Topic: orders (4 partitions)                                   │
+│  Consumer Group: order-processors                               │
+│                                                                  │
+│  ┌──────────────────────────────────────────────────────────┐   │
+│  │                      Partitions                           │   │
+│  │    P0          P1          P2          P3                 │   │
+│  │    │           │           │           │                  │   │
+│  │    ▼           ▼           ▼           ▼                  │   │
+│  │ ┌──────┐   ┌──────┐   ┌──────┐   ┌──────┐                │   │
+│  │ │ C1   │   │ C1   │   │ C2   │   │ C3   │                │   │
+│  │ └──────┘   └──────┘   └──────┘   └──────┘                │   │
+│  └──────────────────────────────────────────────────────────┘   │
+│                                                                  │
+│  • C1 consumes from P0 and P1                                   │
+│  • C2 consumes from P2                                          │
+│  • C3 consumes from P3                                          │
+│                                                                  │
+└────────────────────────────────────────────────────────────────┘
+```
+
+**Key rules:**
+
+- All consumers in a group share the same `group.id`
+- Each partition is consumed by **exactly one** consumer in the group at a time
+- A consumer can consume from **multiple** partitions
+- If a consumer fails, Kafka **rebalances** partitions to other consumers
+- If there are **more consumers than partitions**, some consumers will be idle
+
+### Message Deserialization
+
+Data being consumed must be deserialized from binary format back into its original format. The deserializer must match the serializer used by the producer.
+
+---
+
+## Offsets and Delivery Semantics
+
+An **offset** is a unique, sequential identifier for each record within a partition. Offsets start at 0 and increment by 1 for each new record.
+
+### Offset Semantics
+
+```
+┌────────────────────────────────────────────────────────────────┐
+│                    Offset Management                            │
+├────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  Partition 0:                                                    │
+│                                                                  │
+│  Offset:    0   1   2   3   4   5   6   7   8   9   10          │
+│           ┌───┬───┬───┬───┬───┬───┬───┬───┬───┬───┐             │
+│  Records: │ A │ B │ C │ D │ E │ F │ G │ H │ I │ J │             │
+│           └───┴───┴───┴───┴───┴───┴───┴───┴───┴───┘             │
+│             ▲                   ▲           ▲       ▲            │
+│             │                   │           │       │            │
+│        Log Start           Committed    Current   Log End       │
+│        Offset              Offset       Position  Offset        │
+│                                                                  │
+│  Key Offsets:                                                    │
+│  • Log Start Offset: Earliest available (0, unless truncated)   │
+│  • Committed Offset: Last offset consumer has committed (5)     │
+│  • Current Position: Where consumer will read next (8)          │
+│  • Log End Offset: Next offset to be written (10)               │
+│                                                                  │
+└────────────────────────────────────────────────────────────────┘
+```
+
+**Important:** Offsets are never reused, even after data is deleted. They continually increment.
+
+### Consumer Offset Commits
+
+Consumers periodically commit the offset of the last processed message to Kafka. This is stored in the internal `__consumer_offsets` topic.
+
+Committing offsets allows consumers to resume from where they left off after:
+
+- Consumer crashes
+- Rebalances occur
+- New consumers join the group
+
+### Auto Offset Reset
+
+When a consumer starts with no committed offset, `auto.offset.reset` determines where to begin:
+
+| Value      | Behavior                                  |
+| ---------- | ----------------------------------------- |
+| `earliest` | Start from the beginning of the partition |
+| `latest`   | Start from the end (only new records)     |
+| `none`     | Throw an exception if no offset found     |
+
+### Delivery Semantics
+
+How you commit offsets determines your delivery guarantees:
+
+**At-Most-Once:**
+
+- Offsets are committed **before** processing
+- If processing fails, the message is lost (won't be read again)
+- Use case: Metrics where occasional loss is acceptable
+
+**At-Least-Once (Recommended):**
+
+- Offsets are committed **after** processing
+- If processing fails, the message will be read again
+- Requires **idempotent processing** to handle duplicates
+- Use case: Most business applications
+
+**Exactly-Once:**
+
+- Achievable for Kafka-to-Kafka workflows using the **transactional API**
+- For Kafka-to-external-system workflows, use an **idempotent consumer**
+- Use case: Financial transactions, inventory updates
+
+In practice, **at-least-once with idempotent processing** is the most common and practical approach.
+
+---
+
 ## Storage Internals: Segments and Indexes
 
-Understanding how Kafka stores data on disk is crucial for operations and troubleshooting.
+Understanding how Kafka stores data on disk helps with operations and troubleshooting.
 
 ### Partition Directory Structure
 
@@ -417,7 +663,7 @@ The filename (e.g., `00000000000000001007`) is the **base offset** — the offse
 
 ### Index Files: Fast Offset Lookup
 
-Kafka maintains sparse indexes for efficient offset lookup:
+Kafka maintains sparse indexes for efficient lookups:
 
 **Offset Index (`.index`):** Maps logical offset → physical file position
 
@@ -426,13 +672,6 @@ Kafka maintains sparse indexes for efficient offset lookup:
 │                   Offset Index (.index)                         │
 ├────────────────────────────────────────────────────────────────┤
 │                                                                  │
-│  .log file (1GB):                                                │
-│  ┌─────────────────────────────────────────────────────────┐    │
-│  │ offset 0    offset 28   offset 56   offset 84   ...     │    │
-│  │ @pos 0      @pos 4169   @pos 8364   @pos 12540  ...     │    │
-│  └─────────────────────────────────────────────────────────┘    │
-│        │              │           │           │                  │
-│        ▼              ▼           ▼           ▼                  │
 │  .index file (sparse - NOT every offset):                        │
 │  ┌─────────────────────────────────────────────────────────┐    │
 │  │  offset: 0    │  position: 0      │                     │    │
@@ -450,47 +689,20 @@ Kafka maintains sparse indexes for efficient offset lookup:
 
 **Time Index (`.timeindex`):** Maps timestamp → offset
 
-```
-┌────────────────────────────────────────────────────────────────┐
-│                   Time Index (.timeindex)                       │
-├────────────────────────────────────────────────────────────────┤
-│                                                                  │
-│  ┌─────────────────────────────────────────────────────────┐    │
-│  │  timestamp: 1703318400000  │  offset: 0     │           │    │
-│  │  timestamp: 1703318460000  │  offset: 28    │           │    │
-│  │  timestamp: 1703318520000  │  offset: 56    │           │    │
-│  └─────────────────────────────────────────────────────────┘    │
-│                                                                  │
-│  Use case: "Give me all records after 2025-12-23 10:00:00"      │
-│  1. Binary search timeindex for timestamp                        │
-│  2. Get corresponding offset                                     │
-│  3. Seek to that offset and read forward                        │
-│                                                                  │
-└────────────────────────────────────────────────────────────────┘
-```
+Used for queries like "give me all records after timestamp X".
 
-### Inspecting Segments with kafka-dump-log
+### Inspecting Segments
 
 ```bash
 # Dump log segment contents
 bin/kafka-dump-log.sh \
     --deep-iteration \
     --print-data-log \
-    --files /var/lib/kafka/data/orders.payments.completed-0/00000000000000000000.log
-
-# Output:
-# baseOffset: 0 lastOffset: 0 count: 1 ...
-# | offset: 0 ... key: order-123 payload: {"amount": 99.99}
-# baseOffset: 1 lastOffset: 1 count: 1 ...
-# | offset: 1 ... key: order-456 payload: {"amount": 149.99}
+    --files /var/lib/kafka/data/topic-0/00000000000000000000.log
 
 # Dump index file
 bin/kafka-dump-log.sh \
-    --files /var/lib/kafka/data/orders.payments.completed-0/00000000000000000000.index
-
-# Dump time index
-bin/kafka-dump-log.sh \
-    --files /var/lib/kafka/data/orders.payments.completed-0/00000000000000000000.timeindex
+    --files /var/lib/kafka/data/topic-0/00000000000000000000.index
 ```
 
 ---
@@ -548,11 +760,7 @@ Log compaction retains only the latest value for each key:
 │  ┌────────────────────────────────────────────────────────┐     │
 │  │ K1:V1 │ K2:V1 │ K1:V2 │ K3:V1 │ K2:V2 │ K1:V3 │ K3:V2 │     │
 │  └────────────────────────────────────────────────────────┘     │
-│     │       │       │       │       │       │       │           │
-│     └───────│───────│───────│───────│───────┼───────┘ K1 latest │
-│             └───────│───────│───────┼───────┘         K2 latest │
-│                     │       └───────┘                 K3 latest │
-│                     │                                            │
+│                                                                  │
 │  After Compaction (only latest values kept):                     │
 │  ┌────────────────────────────────┐                              │
 │  │ K2:V2 │ K1:V3 │ K3:V2 │        │                              │
@@ -569,35 +777,11 @@ Log compaction retains only the latest value for each key:
 
 ### Tombstones: Deleting Keys
 
-To delete a key in a compacted topic, send a record with `value = null`:
+To delete a key in a compacted topic, send a record with `value = null` (called a tombstone). Tombstones are retained for `delete.retention.ms` (default 24 hours), then removed during compaction.
 
-```scala
-// Send a tombstone to delete key "user-123"
-val tombstone = new ProducerRecord[String, String](
-  "users.profiles",  // topic
-  "user-123",        // key
-  null               // null value = tombstone
-)
-producer.send(tombstone)
-```
+### Combined Policy
 
-Tombstones are retained for `delete.retention.ms` (default 24 hours) to allow consumers to see the deletion, then removed during compaction.
-
-### Combined Policy: compact,delete
-
-You can combine both policies:
-
-```bash
-# Create topic with combined policy
-bin/kafka-topics.sh --bootstrap-server localhost:9092 \
-    --create \
-    --topic users.events \
-    --config cleanup.policy=compact,delete \
-    --config retention.ms=604800000 \
-    --config min.compaction.lag.ms=3600000
-```
-
-This compacts the log AND deletes segments older than `retention.ms`.
+You can combine both policies with `cleanup.policy=compact,delete`. This compacts the log AND deletes segments older than `retention.ms`.
 
 ### Compaction Configuration
 
@@ -607,367 +791,6 @@ This compacts the log AND deletes segments older than `retention.ms`.
 | `min.compaction.lag.ms`     | 0        | Minimum age before record can be compacted |
 | `max.compaction.lag.ms`     | ∞        | Maximum time record can remain uncompacted |
 | `delete.retention.ms`       | 86400000 | How long to retain tombstones              |
-| `log.cleaner.threads`       | 1        | Number of cleaner threads                  |
-
----
-
-## Offsets and Consumer Position
-
-An **offset** is a unique, sequential identifier for each record within a partition.
-
-### Offset Semantics
-
-```
-┌────────────────────────────────────────────────────────────────┐
-│                    Offset Management                            │
-├────────────────────────────────────────────────────────────────┤
-│                                                                  │
-│  Partition 0:                                                    │
-│                                                                  │
-│  Offset:    0   1   2   3   4   5   6   7   8   9    10
-│           ┌───┬───┬───┬───┬───┬───┬───┬───┬───┬───┐             │
-│  Records: │ A │ B │ C │ D │ E │ F │ G │ H │ I │ J │             │
-│           └───┴───┴───┴───┴───┴───┴───┴───┴───┴───┘             │
-│             ▲                   ▲           ▲        ▲            │
-│             │                   │           │        │            │
-│      Log Start              Committed     Current  Log End     │
-│      Offset (LSO)           Offset        Position Offset      │
-│                                                      (LEO)       │
-│                                                                  │
-│  Key Offsets:                                                    │
-│  • Log Start Offset: Earliest available (0, unless truncated)   │
-│  • Committed Offset: Last offset consumer has committed (5)     │
-│  • Current Position: Where consumer will read next (8)          │
-│  • Log End Offset: Next offset to be written (10)               │
-│                                                                  │
-└────────────────────────────────────────────────────────────────┘
-```
-
-### Consumer Read Behavior
-
-Kafka consumers use the **pull model** to read data, meaning they request data from the broker when they are ready to process it, rather than being pushed data by the broker.
-
-A consumer always reads data from a lower offset to a higher offset and cannot read data backwards. By default, consumers will only consume data that was produced after they first connected to Kafka. However, they can be configured to read from the beginning of the topic or from a specific offset.
-
-### Auto Offset Reset
-
-When a consumer starts with no committed offset, `auto.offset.reset` determines where to begin:
-
-```scala
-// Start from the earliest available record
-props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest")
-
-// Start from the end (only new records)
-props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest")
-
-// Throw exception if no offset found
-props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "none")
-```
-
-### The `__consumer_offsets` Topic
-
-Consumer group offsets are stored in an internal topic:
-
-```
-┌────────────────────────────────────────────────────────────────┐
-│                   __consumer_offsets Topic                      │
-├────────────────────────────────────────────────────────────────┤
-│                                                                  │
-│  Key: [group_id, topic, partition]                              │
-│  Value: [offset, metadata, timestamp]                            │
-│                                                                  │
-│  Example Records:                                                │
-│  ┌──────────────────────────────────────────────────────────┐   │
-│  │ Key: [payment-service, orders.completed, 0]              │   │
-│  │ Value: {offset: 1523, metadata: "", timestamp: ...}      │   │
-│  ├──────────────────────────────────────────────────────────┤   │
-│  │ Key: [payment-service, orders.completed, 1]              │   │
-│  │ Value: {offset: 892, metadata: "", timestamp: ...}       │   │
-│  └──────────────────────────────────────────────────────────┘   │
-│                                                                  │
-│  Default: 50 partitions, compacted                               │
-│  Partition assignment: hash(group_id) % 50                       │
-│                                                                  │
-└────────────────────────────────────────────────────────────────┘
-```
-
-### Manual Offset Management in Scala
-
-```scala
-package com.example.kafka
-
-import org.apache.kafka.clients.consumer.*
-import org.apache.kafka.common.TopicPartition
-import scala.jdk.CollectionConverters.*
-import java.time.Duration
-import java.util.Properties
-
-object ManualOffsetManagement:
-
-  def consumeWithManualCommit(
-      props: Properties,
-      topic: String
-  ): Unit =
-    val consumer = KafkaConsumer[String, String](props)
-    consumer.subscribe(List(topic).asJava)
-
-    try
-      while true do
-        val records = consumer.poll(Duration.ofMillis(1000))
-
-        // Process each partition's records
-        for partition <- records.partitions.asScala do
-          val partitionRecords = records.records(partition).asScala
-
-          for record <- partitionRecords do
-            // Process record
-            println(s"Processing: ${record.key} -> ${record.value}")
-
-          // Commit offset for this partition only
-          val lastOffset = partitionRecords.last.offset
-          val commitOffset = OffsetAndMetadata(lastOffset + 1)
-          consumer.commitSync(Map(partition -> commitOffset).asJava)
-    finally
-      consumer.close()
-
-  /** Seek to specific offset */
-  def seekToOffset(
-      consumer: KafkaConsumer[String, String],
-      topic: String,
-      partition: Int,
-      offset: Long
-  ): Unit =
-    val tp = TopicPartition(topic, partition)
-    consumer.assign(List(tp).asJava)
-    consumer.seek(tp, offset)
-
-  /** Seek to timestamp */
-  def seekToTimestamp(
-      consumer: KafkaConsumer[String, String],
-      topic: String,
-      partition: Int,
-      timestamp: Long
-  ): Unit =
-    val tp = TopicPartition(topic, partition)
-    consumer.assign(List(tp).asJava)
-
-    val timestampsToSearch = Map(tp -> java.lang.Long.valueOf(timestamp)).asJava
-    val offsetsForTimes = consumer.offsetsForTimes(timestampsToSearch)
-
-    Option(offsetsForTimes.get(tp)).foreach { offsetAndTimestamp =>
-      consumer.seek(tp, offsetAndTimestamp.offset)
-    }
-
-  /** Get current lag for consumer group */
-  def getConsumerLag(
-      consumer: KafkaConsumer[String, String],
-      topic: String
-  ): Map[TopicPartition, Long] =
-    val partitions = consumer.partitionsFor(topic).asScala
-      .map(pi => TopicPartition(topic, pi.partition))
-      .toList
-
-    consumer.assign(partitions.asJava)
-    consumer.seekToEnd(partitions.asJava)
-
-    val endOffsets = partitions.map(tp => tp -> consumer.position(tp)).toMap
-
-    consumer.seekToBeginning(partitions.asJava)
-    val committed = consumer.committed(partitions.toSet.asJava).asScala
-
-    partitions.map { tp =>
-      val end = endOffsets(tp)
-      val current = Option(committed.get(tp)).flatten.map(_.offset).getOrElse(0L)
-      tp -> (end - current)
-    }.toMap
-```
-
-### Consumer Groups
-
-A consumer group is a group of consumers that work together to consume messages from one or more topics. Each consumer in the group reads from a unique set of partitions, allowing for parallel processing of messages:
-
-- All consumers in a group share the same `group.id`
-- A consumer can consume from multiple partitions, but each partition can only be consumed by one consumer in the group at a time
-- If a consumer fails or is removed from the group, Kafka will rebalance and assign its partitions to other consumers in the group
-- If there are more consumers than partitions, some consumers will be idle and not receive any messages
-
-### Delivery Semantics
-
-**At-Most-Once:**
-
-- Offsets are committed as soon as the message is received
-- If processing fails, the message is lost (it won't be read again)
-
-**At-Least-Once (usually preferred):**
-
-- Offsets are committed after the message is processed
-- If processing fails, the message will be read again (may be processed multiple times)
-- Requires idempotent processing to handle duplicates
-
-**Exactly-Once:**
-
-- Achievable for Kafka-to-Kafka workflows using the transactional API
-- For Kafka-to-external-system workflows, use an idempotent consumer
-
-In practice, **at-least-once with idempotent processing** is the most desirable and widely used delivery semantics.
-
----
-
-## Brokers and Cluster Architecture
-
-A single Kafka server is called a **Kafka broker**. An ensemble of Kafka brokers working together is called a **Kafka cluster**. Each broker in a cluster is identified by a unique numeric ID.
-
-If there are multiple brokers in a cluster, partitions for a given topic will be distributed among the brokers evenly to achieve load balancing and scalability.
-
-### Bootstrap Servers
-
-Every broker in the cluster has metadata about all other brokers:
-
-- Any broker in the cluster is also called a **bootstrap server**
-- A client can connect to any broker to get metadata about the entire cluster
-- In practice, it is common for Kafka clients to connect to multiple bootstrap servers to ensure high availability and fault tolerance
-
-```scala
-// Connecting to multiple bootstrap servers for fault tolerance
-props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG,
-  "broker1:9092,broker2:9092,broker3:9092")
-```
-
----
-
-## Practical Example: Custom Partitioner
-
-Let's implement a custom partitioner that routes records based on priority:
-
-### PriorityPartitioner.scala
-
-```scala
-package com.example.kafka.partitioner
-
-import org.apache.kafka.clients.producer.Partitioner
-import org.apache.kafka.common.Cluster
-import org.apache.kafka.common.utils.Utils
-import java.util.Map as JMap
-import scala.util.Try
-
-/**
- * Custom partitioner that routes high-priority messages to dedicated partitions.
- *
- * Configuration:
- *   priority.partitioner.high.priority.partitions=2  (first N partitions for high priority)
- *
- * Key format: "priority:actual-key" where priority is "high" or "normal"
- * Example: "high:order-123" or "normal:order-456"
- */
-class PriorityPartitioner extends Partitioner:
-
-  private var highPriorityPartitions: Int = 2
-
-  override def configure(configs: JMap[String, ?]): Unit =
-    highPriorityPartitions = Try(
-      configs.get("priority.partitioner.high.priority.partitions")
-        .asInstanceOf[String].toInt
-    ).getOrElse(2)
-
-  override def partition(
-      topic: String,
-      key: Any,
-      keyBytes: Array[Byte],
-      value: Any,
-      valueBytes: Array[Byte],
-      cluster: Cluster
-  ): Int =
-    val partitionCount = cluster.partitionCountForTopic(topic)
-
-    if keyBytes == null then
-      // No key: round-robin across all partitions
-      Utils.toPositive(Utils.murmur2(valueBytes)) % partitionCount
-    else
-      val keyString = new String(keyBytes, "UTF-8")
-      val (priority, actualKey) = parseKey(keyString)
-
-      if priority == "high" then
-        // High priority: route to first N partitions
-        val highPriorityCount = math.min(highPriorityPartitions, partitionCount)
-        Utils.toPositive(Utils.murmur2(actualKey.getBytes)) % highPriorityCount
-      else
-        // Normal priority: route to remaining partitions
-        val normalPartitionCount = partitionCount - highPriorityPartitions
-        if normalPartitionCount <= 0 then
-          // Fallback if not enough partitions
-          Utils.toPositive(Utils.murmur2(actualKey.getBytes)) % partitionCount
-        else
-          highPriorityPartitions +
-            (Utils.toPositive(Utils.murmur2(actualKey.getBytes)) % normalPartitionCount)
-
-  private def parseKey(key: String): (String, String) =
-    val colonIndex = key.indexOf(':')
-    if colonIndex > 0 then
-      (key.substring(0, colonIndex).toLowerCase, key.substring(colonIndex + 1))
-    else
-      ("normal", key)
-
-  override def close(): Unit = ()
-```
-
-### Using the Custom Partitioner
-
-```scala
-package com.example.kafka
-
-import org.apache.kafka.clients.producer.*
-import java.util.Properties
-
-object PriorityProducerExample:
-
-  def main(args: Array[String]): Unit =
-    val props = Properties()
-    props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092")
-    props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG,
-      "org.apache.kafka.common.serialization.StringSerializer")
-    props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,
-      "org.apache.kafka.common.serialization.StringSerializer")
-
-    // Use custom partitioner
-    props.put(ProducerConfig.PARTITIONER_CLASS_CONFIG,
-      "com.example.kafka.partitioner.PriorityPartitioner")
-    props.put("priority.partitioner.high.priority.partitions", "2")
-
-    val producer = KafkaProducer[String, String](props)
-
-    // High priority orders go to partitions 0-1
-    val highPriorityOrder = ProducerRecord[String, String](
-      "orders",
-      "high:order-123",  // priority:key format
-      """{"orderId": "123", "amount": 10000, "priority": "high"}"""
-    )
-
-    // Normal orders go to partitions 2+
-    val normalOrder = ProducerRecord[String, String](
-      "orders",
-      "normal:order-456",
-      """{"orderId": "456", "amount": 50, "priority": "normal"}"""
-    )
-
-    producer.send(highPriorityOrder).get()
-    producer.send(normalOrder).get()
-
-    println("Sent priority-routed orders!")
-    producer.close()
-```
-
-### Creating the Topic
-
-```bash
-# Create topic with 6 partitions
-# Partitions 0-1: high priority
-# Partitions 2-5: normal priority
-bin/kafka-topics.sh --bootstrap-server localhost:9092 \
-    --create \
-    --topic orders \
-    --partitions 6 \
-    --replication-factor 3
-```
 
 ---
 
@@ -975,17 +798,25 @@ bin/kafka-topics.sh --bootstrap-server localhost:9092 \
 
 1. **Kafka is a commit log:** The append-only design enables sequential I/O, simple replication, and time travel capabilities.
 
-2. **Topics organize, partitions parallelize:** Topics provide logical grouping; partitions enable horizontal scaling and parallel processing.
+2. **Brokers form clusters:** Each broker stores partitions and handles client requests. Any broker can serve as a bootstrap server for cluster discovery.
 
-3. **Keys determine partition assignment:** Records with the same key always go to the same partition, guaranteeing per-key ordering.
+3. **Topics organize, partitions parallelize:** Topics provide logical grouping; partitions enable horizontal scaling and parallel processing.
 
-4. **Segments are the storage unit:** Each partition is divided into segments with index files for fast offset and timestamp lookups.
+4. **Keys determine partition assignment:** Records with the same key always go to the same partition, guaranteeing per-key ordering.
 
-5. **Two retention strategies:** Delete (time/size-based) removes entire segments; Compact (key-based) keeps only the latest value per key.
+5. **Producers control durability:** The `acks` setting determines the trade-off between throughput and data safety.
 
-6. **Offsets are consumer position:** Understanding log start offset, committed offset, and log end offset is crucial for debugging consumer issues.
+6. **Consumer groups enable scaling:** Multiple consumers in a group share the workload, with each partition assigned to exactly one consumer.
 
-7. **Partition count is permanent:** You can increase partitions but never decrease them — choose wisely based on throughput and parallelism needs.
+7. **Offsets track progress:** Understanding committed offset vs. current position is crucial for debugging consumer issues.
+
+8. **Delivery semantics matter:** At-least-once with idempotent processing is the recommended approach for most applications.
+
+9. **Two retention strategies:** Delete (time/size-based) removes entire segments; Compact (key-based) keeps only the latest value per key.
+
+10. **Partition count is permanent:** You can increase partitions but never decrease them — choose wisely based on throughput and parallelism needs.
+
+---
 
 ## References
 
