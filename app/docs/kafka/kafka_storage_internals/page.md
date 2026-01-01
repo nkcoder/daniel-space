@@ -1,11 +1,12 @@
 ---
-title: Kafka Internals
-description: Understanding Kafka's internals including storage architecture, indexes, and KRaft.
+title: Kafka Storage Internals
+description: Understanding Kafka's storage architecture, segments, indexes, and lookups.
+date: 2026-01-01
 ---
 
-# Kafka Internals
+# Kafka Storage Architecture
 
-Understanding Kafka's internals transforms you from a user into an operator capable of tuning, troubleshooting, and optimizing clusters. This post explores how Kafka stores data on disk, locates messages efficiently, and manages cluster metadata with KRaft.
+Understanding Kafka's storage internals transforms you from a user into an operator capable of tuning, troubleshooting, and optimizing clusters. This post explores how Kafka stores data on disk and locates messages efficiently.
 
 ## Storage Architecture Overview
 
@@ -29,7 +30,9 @@ Kafka's storage model is elegantly simple: append-only logs organized hierarchic
 
 **Key insight**: The partition is the unit of parallelism, but the **segment** is the unit of storage.
 
-> **Note**: The `__consumer_offsets` topic is created **lazily**—it only appears after a consumer group commits its first offset. If you've only been producing messages, you won't see it. Similarly, `__cluster_metadata` only exists in KRaft mode clusters.
+> **Note**: The `__consumer_offsets` topic is created **lazily**—it only appears after a consumer group commits its first offset. Similarly, `__cluster_metadata` only exists in KRaft mode clusters.
+
+---
 
 ## Log Segments: The Building Blocks
 
@@ -67,7 +70,7 @@ Only the **active segment** receives writes. Closed segments are immutable and c
 
 - Read by consumers
 - Deleted based on retention policy
-- Compacted (if cleanup policy is `compact`)
+- Compacted (if cleanup policy includes `compact`)
 
 ### Segment Rolling Conditions
 
@@ -79,13 +82,15 @@ A new segment is created when any condition is met:
 | Time limit elapsed | `log.segment.ms`           | 7 days  |
 | Index full         | `log.index.size.max.bytes` | 10 MB   |
 
-```scala
-// Topic-level override for smaller segments
+```bash
+# Topic-level override for smaller segments
 kafka-configs.sh --alter \
   --entity-type topics \
   --entity-name events \
-  --add-config segment.bytes=104857600  // 100 MB
+  --add-config segment.bytes=104857600  # 100 MB
 ```
+
+---
 
 ## Index Files: Fast Message Lookup
 
@@ -178,15 +183,15 @@ Maps timestamps to offsets for time-based seeks:
 └─────────────────────┴────────────────────────┘
 ```
 
-**Why offset instead of file position?** You might wonder why `.timeindex` doesn't store positions directly like `.index` does. The indirection is intentional:
+**Why offset instead of file position?** You might wonder why `.timeindex` doesn't store positions directly. The indirection is intentional:
 
-1. **Offsets are stable; positions aren't**: File positions can shift during log compaction or segment rewrites. Offsets never change for a given record. Storing offsets means `.timeindex` remains valid even when physical layout changes.
+1. **Offsets are stable; positions aren't**: File positions can shift during log compaction. Offsets never change for a given record.
 
 2. **Reuses existing infrastructure**: The offset→position mapping already exists in `.index`. No need to duplicate position tracking.
 
 3. **Offset is Kafka's universal identifier**: Consumers, replication, and transactions all speak "offset." By converting timestamp→offset first, the rest of the system works unchanged.
 
-4. **Negligible performance cost**: Two binary searches on memory-mapped files (O(log n) + O(log n)) takes nanoseconds.
+4. **Negligible performance cost**: Two binary searches on memory-mapped files takes nanoseconds.
 
 ### Timestamp Lookup Flow
 
@@ -195,18 +200,18 @@ Maps timestamps to offsets for time-based seeks:
 │  "Find records from timestamp 1638100400000"                    │
 │                                                                 │
 │  Step 1: Binary search .timeindex                               │
-│  ┌─────────────────────────────────────┐                        │
-│  │ 1638100314372 → offset 28           │                        │
+│  ┌─────────────────────────────────────────┐                    │
+│  │ 1638100314372 → offset 28               │                    │
 │  │ 1638100454372 → offset 56  ◄── closest ≤ target              │
-│  │ 1638100594372 → offset 84           │                        │
-│  └─────────────────────────────────────┘                        │
+│  │ 1638100594372 → offset 84               │                    │
+│  └─────────────────────────────────────────┘                    │
 │                          │                                      │
 │                          ▼                                      │
 │  Step 2: Binary search .index (with offset 56)                  │
-│  ┌─────────────────────────────────────┐                        │
+│  ┌─────────────────────────────────────────┐                    │
 │  │ offset 41 → position 8192  ◄── closest ≤ 56                  │
-│  │ offset 63 → position 12288          │                        │
-│  └─────────────────────────────────────┘                        │
+│  │ offset 63 → position 12288              │                    │
+│  └─────────────────────────────────────────┘                    │
 │                          │                                      │
 │                          ▼                                      │
 │  Step 3: Sequential scan .log from position 8192                │
@@ -215,28 +220,28 @@ Maps timestamps to offsets for time-based seeks:
 
 This enables `consumer.offsetsForTimes()` to find where to start consuming from a specific point in time.
 
+---
+
 ## Who Performs These Lookups?
 
-A common misconception: consumers and followers don't search indexes directly. **The broker performs all segment/index lookups.** Clients only communicate via network requests.
+A common misconception: consumers don't search indexes directly. **The broker performs all segment/index lookups.** Clients only communicate via network requests.
 
 ### Fetch by Offset (Normal Consumption)
 
 ```
-┌──────────────┐                              ┌──────────────┐
-│   Consumer   │                              │    Broker    │
-└──────┬───────┘                              └──────┬───────┘
-       │                                             │
-       │  FetchRequest(topic, partition, offset=50)  │
-       │────────────────────────────────────────────►│
-       │                                             │
-       │                                   ┌─────────┴─────────┐
-       │                                   │ 1. Find segment   │
-       │                                   │ 2. Search .index  │
-       │                                   │ 3. Scan .log      │
-       │                                   └─────────┬─────────┘
-       │                                             │
-       │◄────────────────────────────────────────────│
-       │  FetchResponse(records[50, 51, 52, ...])    │
+Consumer                                      Broker
+    │                                            │
+    │  FetchRequest(topic, partition, offset=50) │
+    │───────────────────────────────────────────►│
+    │                                            │
+    │                                  ┌─────────┴─────────┐
+    │                                  │ 1. Find segment   │
+    │                                  │ 2. Search .index  │
+    │                                  │ 3. Scan .log      │
+    │                                  └─────────┬─────────┘
+    │                                            │
+    │◄───────────────────────────────────────────│
+    │  FetchResponse(records[50, 51, 52, ...])   │
 ```
 
 The consumer simply says "give me records starting at offset 50." It has no idea about segments or indexes.
@@ -244,25 +249,23 @@ The consumer simply says "give me records starting at offset 50." It has no idea
 ### Seek by Timestamp
 
 ```
-┌──────────────┐                              ┌──────────────┐
-│   Consumer   │                              │    Broker    │
-└──────┬───────┘                              └──────┬───────┘
-       │                                             │
-       │  ListOffsetsRequest(timestamp=1638100400)   │
-       │────────────────────────────────────────────►│
-       │                                   ┌─────────┴─────────┐
-       │                                   │ Search .timeindex │
-       │                                   └─────────┬─────────┘
-       │◄────────────────────────────────────────────│
-       │  ListOffsetsResponse(offset=56)             │
-       │                                             │
-       │  FetchRequest(offset=56)                    │
-       │────────────────────────────────────────────►│
+Consumer                                      Broker
+    │                                            │
+    │  ListOffsetsRequest(timestamp=1638100400)  │
+    │───────────────────────────────────────────►│
+    │                                  ┌─────────┴─────────┐
+    │                                  │ Search .timeindex │
+    │                                  └─────────┬─────────┘
+    │◄───────────────────────────────────────────│
+    │  ListOffsetsResponse(offset=56)            │
+    │                                            │
+    │  FetchRequest(offset=56)                   │
+    │───────────────────────────────────────────►│
 ```
 
 Two-phase: consumer asks for the offset, then fetches from it.
 
-### Replication
+### Replication Uses the Same API
 
 Follower brokers use the **same FetchRequest API** as consumers. The leader broker performs identical lookups—replication is just another fetch client.
 
@@ -275,35 +278,15 @@ Follower brokers use the **same FetchRequest API** as consumers. The leader brok
 
 This design provides security (no file system access needed), abstraction (clients don't care about storage internals), and flexibility (storage format can evolve without breaking clients).
 
-### Replication Fetch Loop
+---
 
-Since replication uses the same FetchRequest API, here's how followers stay in sync:
+## Record Batch Format
 
-```
-Follower                              Leader
-   │                                     │
-   │──FetchRequest(offset=1000)─────────►│
-   │                                     │ (lookup in .index/.log)
-   │◄──FetchResponse(records, HW=1050)───│
-   │                                     │
-   │  (append records to local .log)     │
-   │  (update local high watermark)      │
-   │                                     │
-   │──FetchRequest(offset=1050)─────────►│
-   │                                     │
-   │◄──FetchResponse(records, HW=1100)───│
-   │              ...                    │
-```
-
-The follower continuously fetches, appends to its own segments, and updates its high watermark. This is why followers have identical segment/index file structures to the leader. We'll explore ISR management, leader election, and durability guarantees in depth in the next post.
-
-## Record Batch Format (Magic v2)
-
-Since Kafka 0.11, records are organized in batches with a standardized binary format:
+Since Kafka 0.11, records are organized in batches with a standardized binary format (Magic v2). Understanding this format helps when debugging with `kafka-dump-log.sh` or optimizing producer batching.
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                      Record Batch Header (61 bytes)              │
+│                   Record Batch Header (61 bytes)                 │
 ├─────────────────────────────────────────────────────────────────┤
 │ baseOffset (8)        │ First offset in batch                   │
 │ batchLength (4)       │ Total batch size                        │
@@ -312,28 +295,33 @@ Since Kafka 0.11, records are organized in batches with a standardized binary fo
 │ crc (4)               │ Checksum of attributes → records        │
 │ attributes (2)        │ Compression, timestamp type, txn flags  │
 │ lastOffsetDelta (4)   │ Offset of last record relative to base  │
-│ firstTimestamp (8)    │ Timestamp of first record               │
-│ maxTimestamp (8)      │ Max timestamp in batch                  │
+│ baseSequence (4)      │ Sequence number for deduplication       │
 │ producerId (8)        │ For idempotence/transactions            │
 │ producerEpoch (2)     │ Producer epoch                          │
-│ baseSequence (4)      │ Sequence number for deduplication       │
 │ recordCount (4)       │ Number of records in batch              │
 ├─────────────────────────────────────────────────────────────────┤
-│                      Records (compressed)                        │
+│                   Records (may be compressed)                    │
 │  ┌─────────────────────────────────────────────────────────┐    │
 │  │ Record 0: length, attrs, timestampDelta, offsetDelta,   │    │
 │  │           keyLen, key, valueLen, value, headers         │    │
 │  ├─────────────────────────────────────────────────────────┤    │
 │  │ Record 1: ...                                           │    │
-│  ├─────────────────────────────────────────────────────────┤    │
-│  │ Record N: ...                                           │    │
 │  └─────────────────────────────────────────────────────────┘    │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
+### Why This Matters
+
+| Field                         | Operational Relevance                                                                 |
+| ----------------------------- | ------------------------------------------------------------------------------------- |
+| `producerId` / `baseSequence` | Enables idempotent deduplication—visible in dump logs when debugging duplicate issues |
+| `attributes`                  | Shows compression codec (bits 0-2) and whether batch is transactional (bit 4)         |
+| `partitionLeaderEpoch`        | Helps identify which leader wrote the batch—useful for debugging replication issues   |
+| `recordCount`                 | Reveals batching efficiency—low counts mean suboptimal producer configuration         |
+
 ### Compression at Batch Level
 
-Compression applies to the records portion, not the header. This is why larger batches compress better—more data for the algorithm to find patterns.
+Compression applies to the records portion, not the header:
 
 ```
 Attributes bits 0-2 encode compression:
@@ -344,24 +332,40 @@ Attributes bits 0-2 encode compression:
   4 = zstd
 ```
 
-The batch header remains uncompressed so brokers can route and validate without decompression.
+The batch header remains uncompressed so brokers can route and validate without decompression. This is why larger batches compress better—more data for the algorithm to find patterns.
+
+### Inspecting Batches
+
+```bash
+# Dump segment with batch details
+kafka-dump-log.sh --deep-iteration --print-data-log \
+  --files /var/kafka-logs/orders-0/00000000000000000000.log
+
+# Output shows:
+# baseOffset: 0 lastOffset: 4 count: 5 ...
+# producerId: 1000 producerEpoch: 0 baseSequence: 0
+# compresscodec: lz4
+```
+
+---
 
 ## Log Retention & Cleanup
 
+Kafka supports two cleanup policies: `delete` and `compact`. They can be combined as `compact,delete`.
+
 ### Delete Policy
 
-```
+Removes entire segments based on time or size:
+
+```properties
 # Time-based (default: 7 days)
 log.retention.hours=168
 
 # Size-based (default: unlimited)
 log.retention.bytes=-1
-
-# Minimum compaction lag
-log.cleaner.min.compaction.lag.ms=0
 ```
 
-**Important**: Retention applies to **closed segments only**. An active segment is never deleted, even if it exceeds retention time.
+**Important**: Retention applies to **closed segments only**. An active segment is never deleted, even if it exceeds retention time. This is why very low-volume topics may retain data longer than expected.
 
 ### Compact Policy
 
@@ -373,106 +377,58 @@ Before compaction:          After compaction:
 │ K1:V1 (offset 0)    │     │                     │
 │ K2:V1 (offset 1)    │     │                     │
 │ K1:V2 (offset 2)    │     │ K2:V2 (offset 3)    │
-│ K2:V2 (offset 3)    │ ──→ │ K1:V3 (offset 4)    │
+│ K2:V2 (offset 3)    │ ──► │ K1:V3 (offset 4)    │
 │ K1:V3 (offset 4)    │     │ K3:V1 (offset 5)    │
 │ K3:V1 (offset 5)    │     │                     │
 └─────────────────────┘     └─────────────────────┘
+
+Note: Offsets are preserved—compaction never changes them
 ```
 
-**Tombstones**: Setting a key's value to `null` marks it for deletion after `delete.retention.ms`.
+**Tombstones**: Setting a key's value to `null` marks it for deletion. The tombstone is retained for `delete.retention.ms` (default 24 hours) to propagate to consumers, then removed.
 
-## KRaft: Kafka's Native Metadata Management
+### How Log Compaction Works
 
-KRaft (Kafka Raft) replaces ZooKeeper with a built-in consensus protocol. Since Kafka 4.0, ZooKeeper mode is deprecated—KRaft is the path forward.
+The log cleaner runs as background threads that:
 
-### Architecture Comparison
+1. **Select dirty segments**: Segments with keys that have newer values elsewhere
+2. **Build offset map**: In-memory map of key → latest offset
+3. **Copy clean data**: Write non-superseded records to new segment
+4. **Swap and delete**: Replace old segments with compacted ones
 
 ```
-ZooKeeper Mode (Legacy)              KRaft Mode (Kafka 4.x)
-┌─────────────────────────┐         ┌─────────────────────────┐
-│     ZooKeeper Cluster   │         │   Controller Quorum     │
-│  ┌─────┐┌─────┐┌─────┐  │         │  ┌─────┐┌─────┐┌─────┐  │
-│  │ ZK1 ││ ZK2 ││ ZK3 │  │         │  │ C1  ││ C2  ││ C3  │  │
-│  └──┬──┘└──┬──┘└──┬──┘  │         │  │(act)││(stby)│(stby)│  │
-│     │      │      │     │         │  └──┬──┘└──┬──┘└──┬──┘  │
-└─────┼──────┼──────┼─────┘         │     │      │      │     │
-      │      │      │               │     └──────┴──────┘     │
-      ▼      ▼      ▼               │    __cluster_metadata   │
-┌─────────────────────────┐         └───────────┬─────────────┘
-│    Kafka Brokers        │                     │
-│  ┌─────┐┌─────┐┌─────┐  │         ┌───────────▼─────────────┐
-│  │ B1  ││ B2  ││ B3  │  │         │    Kafka Brokers        │
-│  │(ctr)││     ││     │  │         │  ┌─────┐┌─────┐┌─────┐  │
-│  └─────┘└─────┘└─────┘  │         │  │ B1  ││ B2  ││ B3  │  │
-└─────────────────────────┘         │  │(obs)││(obs)││(obs)│  │
-                                    │  └─────┘└─────┘└─────┘  │
-                                    └─────────────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│                    Log Cleaner Process                          │
+│                                                                 │
+│  Dirty Segments        Cleaner Thread         Clean Segment     │
+│  ┌─────────────┐      ┌──────────────┐       ┌─────────────┐   │
+│  │ K1:V1       │      │              │       │             │   │
+│  │ K2:V1       │ ───► │ Build map:   │ ───►  │ K2:V2       │   │
+│  │ K1:V2       │      │ K1→offset 4  │       │ K1:V3       │   │
+│  │ K2:V2       │      │ K2→offset 3  │       │ K3:V1       │   │
+│  │ K1:V3       │      │ K3→offset 5  │       │             │   │
+│  │ K3:V1       │      │              │       │             │   │
+│  └─────────────┘      └──────────────┘       └─────────────┘   │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
-### The `__cluster_metadata` Topic
+### Compaction Configuration
 
-All cluster metadata lives in a single-partition internal topic:
-
-- Topic configurations
-- Partition assignments
-- Broker registrations
-- ACLs and quotas
-- Feature flags
-
-This log is replicated across controller nodes using the Raft protocol.
-
-### Controller Roles
-
-| Role       | `process.roles`     | Responsibility                       |
-| ---------- | ------------------- | ------------------------------------ |
-| Controller | `controller`        | Metadata management, leader election |
-| Broker     | `broker`            | Handle client requests, store data   |
-| Combined   | `controller,broker` | Both (dev/test only)                 |
-
-### Why KRaft is Better
-
-| Aspect                        | ZooKeeper                 | KRaft                    |
-| ----------------------------- | ------------------------- | ------------------------ |
-| Controller failover           | Load state from ZK (slow) | Already in memory (fast) |
-| Metadata propagation          | RPCs to each broker       | Event log replication    |
-| Partition limit               | ~200K practical limit     | Millions supported       |
-| Operational complexity        | Two systems to manage     | Single system            |
-| Recovery time (2M partitions) | Minutes                   | Seconds                  |
-
-### Configuring KRaft
-
-**Controller node:**
-
-```properties
-process.roles=controller
-node.id=1
-controller.quorum.voters=1@controller1:9093,2@controller2:9093,3@controller3:9093
-controller.listener.names=CONTROLLER
-listeners=CONTROLLER://controller1:9093
-```
-
-**Broker node:**
-
-```properties
-process.roles=broker
-node.id=101
-controller.quorum.voters=1@controller1:9093,2@controller2:9093,3@controller3:9093
-listeners=PLAINTEXT://broker1:9092
-```
-
-### Dynamic Quorum (KIP-853, Kafka 3.9+)
-
-Controllers can now be added/removed without restart:
+| Config                              | Default  | Purpose                         |
+| ----------------------------------- | -------- | ------------------------------- |
+| `log.cleaner.threads`               | 1        | Cleaner thread count            |
+| `log.cleaner.dedupe.buffer.size`    | 128 MB   | Memory for offset map           |
+| `log.cleaner.min.cleanable.ratio`   | 0.5      | Dirty ratio to trigger cleaning |
+| `log.cleaner.min.compaction.lag.ms` | 0        | Minimum age before compacting   |
+| `delete.retention.ms`               | 24 hours | How long to keep tombstones     |
 
 ```bash
-# Add a new controller
-kafka-metadata-quorum.sh --bootstrap-server localhost:9092 \
-  add-controller --controller-id 4 --controller-directory-id <uuid>
-
-# Remove a controller
-kafka-metadata-quorum.sh --bootstrap-server localhost:9092 \
-  remove-controller --controller-id 3 --controller-directory-id <uuid>
+# Check cleaner status
+kafka-log-dirs.sh --describe --bootstrap-server localhost:9092 \
+  --topic-list __consumer_offsets
 ```
+
+---
 
 ## Performance Optimizations
 
@@ -504,60 +460,78 @@ Kafka relies heavily on the OS page cache rather than managing its own cache:
 Append-only writes and sequential reads maximize disk throughput:
 
 - HDDs: 100+ MB/s sequential vs <1 MB/s random
-- SSDs: Still significant difference due to reduced seeks
+- SSDs: Still significant difference due to reduced write amplification
+
+---
 
 ## Monitoring Storage Health
 
 ### Key Metrics
 
-| Metric                      | Meaning                     | Warning Sign                   |
-| --------------------------- | --------------------------- | ------------------------------ |
-| `LogEndOffset`              | Latest offset in partition  | Stalled = no writes            |
-| `LogStartOffset`            | Earliest available offset   | Jumping = aggressive retention |
-| `Size`                      | Partition size on disk      | Unexpected growth              |
-| `NumLogSegments`            | Segment count per partition | Too many = small segments      |
-| `UnderReplicatedPartitions` | Partitions below ISR        | > 0 = replication issues       |
+| Metric                                                            | Meaning                     | Warning Sign                   |
+| ----------------------------------------------------------------- | --------------------------- | ------------------------------ |
+| `kafka.log:type=Log,name=Size`                                    | Partition size on disk      | Unexpected growth              |
+| `kafka.log:type=Log,name=NumLogSegments`                          | Segment count               | Too many = small segments      |
+| `kafka.log:type=Log,name=LogEndOffset`                            | Latest offset               | Stalled = no writes            |
+| `kafka.log:type=Log,name=LogStartOffset`                          | Earliest offset             | Jumping = aggressive retention |
+| `kafka.server:type=ReplicaManager,name=UnderReplicatedPartitions` | Partitions missing replicas | > 0 = replication issues       |
 
 ### Useful Commands
 
 ```bash
-# Describe log segments
+# Describe log directories and sizes
 kafka-log-dirs.sh --describe \
   --bootstrap-server localhost:9092 \
   --topic-list orders
 
-# Dump segment contents
+# Dump segment contents for debugging
 kafka-dump-log.sh --deep-iteration --print-data-log \
   --files /var/kafka-logs/orders-0/00000000000000000000.log
 
-# Check KRaft quorum status
-kafka-metadata-quorum.sh --bootstrap-server localhost:9092 \
-  describe --status
+# Check index integrity
+kafka-dump-log.sh --verify-index-only \
+  --files /var/kafka-logs/orders-0/00000000000000000000.index
 ```
 
-## Best Practices Summary
+---
 
-1. **Size segments appropriately**: Default 1GB works for most cases; smaller for low-volume topics needing faster compaction
+## Best Practices
 
-2. **Monitor disk usage**: Set alerts for partition size growth and ensure retention matches capacity
+1. **Size segments appropriately**: Default 1GB works for most cases; use smaller segments for low-volume topics that need faster compaction or retention
 
-3. **Use KRaft for new clusters**: ZooKeeper is deprecated; migrate existing clusters proactively
+2. **Monitor disk usage**: Set alerts for partition size growth; ensure retention settings match available capacity
 
-4. **Deploy 3 or 5 controllers**: Odd numbers for quorum; more than 5 rarely needed
+3. **Tune index interval carefully**: Default `log.index.interval.bytes=4096` works well; smaller values increase index size, larger values increase scan time
 
-5. **Separate controller and broker roles** in production for isolation
+4. **Enable compression at producer**: Reduces network transfer and storage; `lz4` or `zstd` recommended for balance of speed and ratio
 
-6. **Tune `log.index.interval.bytes`** only if you have specific lookup latency requirements
+5. **Leave page cache to the OS**: Don't over-allocate JVM heap; Kafka performs best with large page cache
 
-7. **Enable compression** at producer level for network and storage savings
+6. **Use SSDs for high-throughput topics**: While Kafka works well on HDDs due to sequential I/O, SSDs help with index lookups and compaction
 
-8. **Leave page cache management to the OS**: Don't over-allocate JVM heap
+7. **Monitor under-replicated partitions**: This is your primary health indicator for storage and replication issues
 
-9. **Use SSDs for `__cluster_metadata`** log directory for faster controller operations
+8. **Watch for segment count growth**: Many small segments indicate misconfigured rolling or very low write volume
 
-10. **Monitor under-replicated partitions** as a primary health indicator
+---
 
-## Further Reading
+## Key Takeaways
 
-- [Apache Kafka® Internal Architecture](https://developer.confluent.io/courses/architecture/get-started/)
-- [Kafka Implementation](https://kafka.apache.org/41/implementation/)
+1. **Segments are the storage unit**: Understanding the segment lifecycle is essential for capacity planning and retention tuning.
+
+2. **Indexes enable fast lookups**: Binary search on `.index` and `.timeindex` files provides O(log n) message location.
+
+3. **Brokers do all the work**: Clients never touch storage directly—they speak offsets, brokers translate to positions.
+
+4. **Compaction preserves offsets**: Log compaction removes old values but never changes offsets of retained records.
+
+5. **Page cache is your friend**: Kafka's performance relies on OS-level caching; size your memory accordingly.
+
+---
+
+## References
+
+- [Kafka Documentation: Implementation](https://kafka.apache.org/documentation/#implementation)
+- [Kafka Documentation: Design](https://kafka.apache.org/documentation/#design)
+- [The Log: What every software engineer should know](https://engineering.linkedin.com/distributed-systems/log-what-every-software-engineer-should-know-about-real-time-datas-unifying)
+- [Kafka Storage Internals](https://developer.confluent.io/courses/architecture/get-started/)
