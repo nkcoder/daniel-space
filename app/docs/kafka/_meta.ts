@@ -1,7 +1,7 @@
 import { MetaRecord } from 'nextra';
 
 const meta: MetaRecord = {
-  start_local_kafka: 'Start Local Kafka',
+  kafka_docker_image: 'Kafka Docker Images',
   kafka_introduction: 'Introduction to kafka',
   kafka_core_concepts: 'Kafka Core Concepts',
   kafka_producer: 'Kafka Producer',
