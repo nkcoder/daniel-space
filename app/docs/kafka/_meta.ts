@@ -5,7 +5,8 @@ const meta: MetaRecord = {
   kafka_introduction: 'Introduction to kafka',
   kafka_core_concepts: 'Kafka Core Concepts',
   producer_deepdive: 'Kafka Producer Deep Dive',
-  consumer_deepdive: 'Kafka Consumer Deep Dive'
+  consumer_deepdive: 'Kafka Consumer Deep Dive',
+  kafka_internals: 'Kafka Internals'
 };
 
 export default meta;
