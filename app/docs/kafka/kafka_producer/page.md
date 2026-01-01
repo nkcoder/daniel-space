@@ -41,14 +41,17 @@ Interceptors implement the `ProducerInterceptor` interface and are commonly used
 - **Monitoring**: Capturing metrics about message rates and sizes before they enter the internal buffer.
 - **Enforcement**: Masking PII or validating that every message has a specific header.
 
-```scala
-class TracingInterceptor extends ProducerInterceptor[String, String]:
-  override def onSend(record: ProducerRecord[String, String]): ProducerRecord[String, String] =
-    // Modify headers to inject trace ID
-    record.headers().add("trace-id", UUID.randomUUID().toString.getBytes)
-    record
+```java
+public class TracingInterceptor implements ProducerInterceptor<String, String> {
+    @Override
+    public ProducerRecord<String, String> onSend(ProducerRecord<String, String> record) {
+        // Modify headers to inject trace ID
+        record.headers().add("trace-id", UUID.randomUUID().toString().getBytes());
+        return record;
+    }
 
-  // ... other methods
+    // ... other methods
+}
 ```
 
 ## Serialization & Schemas
@@ -107,12 +110,12 @@ The default behavior since Kafka 2.4 uses "sticky" partitioning for records with
 
 This dramatically improves batching efficiency compared to round-robin for keyless messages.
 
-```scala
+```java
 // Key present: consistent partition assignment via murmur2 hash
-producer.send(ProducerRecord("orders", "customer-123", orderJson))
+producer.send(new ProducerRecord<>("orders", "customer-123", orderJson));
 
 // No key: sticky to current partition until batch fills
-producer.send(ProducerRecord("events", null, eventJson))
+producer.send(new ProducerRecord<>("events", null, eventJson));
 ```
 
 ### Adaptive Partitioning
@@ -162,13 +165,13 @@ The broker rejects (but acknowledges) any message with sequence ≤ the last com
 
 These settings are now the defaults and provide the strongest guarantees:
 
-```scala
-val config = Map(
-  "enable.idempotence"                    -> "true",  // default
-  "acks"                                  -> "all",   // default
-  "retries"                               -> Int.MaxValue.toString, // effective default
-  "max.in.flight.requests.per.connection" -> "5"      // default, ordering preserved
-)
+```java
+var config = Map.of(
+    "enable.idempotence"                   , "true",           // default
+    "acks"                                 , "all",            // default
+    "retries"                              , Integer.toString(Integer.MAX_VALUE), // effective default
+    "max.in.flight.requests.per.connection", "5"               // default, ordering preserved
+);
 ```
 
 **Key insight**: With idempotence enabled and `max.in.flight.requests.per.connection ≤ 5`, Kafka guarantees ordering even with retries. The broker tracks sequences for up to 5 batches per producer.
@@ -207,33 +210,31 @@ While idempotence provides exactly-once within a partition, **transactions** ext
 
 ### Transactional Producer Pattern
 
-```scala
-val producer = KafkaProducer[String, String](
-  Map(
-    "bootstrap.servers" -> "localhost:9092",
-    "transactional.id"  -> "order-processor-1",
+```java
+var config = Map.of(
+    "bootstrap.servers", "localhost:9092",
+    "transactional.id" , "order-processor-1"
     // idempotence automatically enabled
-  ).asJava,
-  StringSerializer(),
-  StringSerializer()
-)
+);
 
-producer.initTransactions()
+try (var producer = new KafkaProducer<String, String>(config, new StringSerializer(), new StringSerializer())) {
+    producer.initTransactions();
 
-try
-  producer.beginTransaction()
+    try {
+        producer.beginTransaction();
 
-  producer.send(ProducerRecord("orders", orderId, orderJson))
-  producer.send(ProducerRecord("inventory", productId, updateJson))
-  producer.send(ProducerRecord("notifications", null, notifyJson))
+        producer.send(new ProducerRecord<>("orders", orderId, orderJson));
+        producer.send(new ProducerRecord<>("inventory", productId, updateJson));
+        producer.send(new ProducerRecord<>("notifications", null, notifyJson));
 
-  producer.commitTransaction()
-catch
-  case e: ProducerFencedException =>
-    // Another producer with same transactional.id took over
-    producer.close()
-  case e: KafkaException =>
-    producer.abortTransaction()
+        producer.commitTransaction();
+    } catch (ProducerFencedException e) {
+        // Another producer with same transactional.id took over
+        producer.close();
+    } catch (KafkaException e) {
+        producer.abortTransaction();
+    }
+}
 ```
 
 ### Consumer Isolation Levels
@@ -261,15 +262,15 @@ Compression happens at the batch level, making larger batches more effective:
 
 ### Fine-Tuning Compression (Kafka 4.x)
 
-```scala
-Map(
-  "compression.type"       -> "zstd",
-  "compression.zstd.level" -> "3",    // 1-22, default 3
-  // or for gzip
-  "compression.gzip.level" -> "6",    // 1-9, default -1 (library default)
-  // or for lz4
-  "compression.lz4.level"  -> "9",    // 1-17, default 9
-)
+```java
+var config = Map.of(
+    "compression.type"      , "zstd",
+    "compression.zstd.level", "3"   // 1-22, default 3
+);
+// or for gzip
+var gzipConfig = Map.of("compression.gzip.level", "6"); // 1-9, default -1
+// or for lz4
+var lz4Config = Map.of("compression.lz4.level", "9");  // 1-17, default 9
 ```
 
 **Pro tip**: Higher `linger.ms` improves compression ratios by creating larger batches.
@@ -300,92 +301,95 @@ The broker must also accept these large requests. Failures here often result in 
 
 Kafka 4.x uses a delivery timeout model rather than explicit retry counts:
 
-```scala
-Map(
-  "delivery.timeout.ms" -> "120000",  // 2 minutes total time to deliver
-  "request.timeout.ms"  -> "30000",   // per-request timeout
-  "retry.backoff.ms"    -> "100",     // initial backoff
-  "retry.backoff.max.ms"-> "1000",    // max backoff (exponential)
-)
+```java
+var config = Map.of(
+    "delivery.timeout.ms"  , "120000", // 2 minutes total time to deliver
+    "request.timeout.ms"   , "30000",  // per-request timeout
+    "retry.backoff.ms"     , "100",    // initial backoff
+    "retry.backoff.max.ms" , "1000"    // max backoff (exponential)
+);
 ```
 
 The relationship: `delivery.timeout.ms ≥ linger.ms + request.timeout.ms`
 
 ### Handling Send Failures
 
-```scala
+```java
 // Async with callback
-producer.send(record, (metadata, exception) =>
-  if exception != null then
-    exception match
-      case _: RetriableException =>
-        // Kafka will auto-retry; log for visibility
-        logger.warn(s"Retriable error, will retry: ${exception.getMessage}")
-      case _: SerializationException =>
-        // Data issue, won't be retried
-        deadLetterQueue.send(record)
-      case _ =>
-        // Unknown error
-        metrics.increment("producer.errors")
-)
+producer.send(record, (metadata, exception) -> {
+    if (exception != null) {
+        if (exception instanceof RetriableException) {
+            // Kafka will auto-retry; log for visibility
+            logger.warn("Retriable error, will retry: " + exception.getMessage());
+        } else if (exception instanceof SerializationException) {
+            // Data issue, won't be retried
+            deadLetterQueue.send(record);
+        } else {
+            // Unknown error
+            metrics.increment("producer.errors");
+        }
+    }
+});
 
 // Sync (blocks, throws on failure)
-try
-  val metadata = producer.send(record).get(10, TimeUnit.SECONDS)
-catch
-  case e: ExecutionException => handleError(e.getCause)
-  case e: TimeoutException   => handleTimeout()
+try {
+    var metadata = producer.send(record).get(10, TimeUnit.SECONDS);
+} catch (ExecutionException e) {
+    handleError(e.getCause());
+} catch (TimeoutException | InterruptedException e) {
+    handleTimeout();
+}
 ```
 
 ## Performance Tuning Guide
 
 ### High Throughput Configuration
 
-```scala
-Map(
-  "batch.size"   -> "65536",     // 64 KB batches
-  "linger.ms"    -> "20",        // Wait up to 20ms
-  "buffer.memory"-> "67108864",  // 64 MB buffer
-  "compression.type" -> "lz4",
-  "acks" -> "1",                 // Trade durability for speed
-)
+```java
+var config = Map.of(
+    "batch.size"      , "65536",    // 64 KB batches
+    "linger.ms"       , "20",       // Wait up to 20ms
+    "buffer.memory"   , "67108864", // 64 MB buffer
+    "compression.type", "lz4",
+    "acks"            , "1"         // Trade durability for speed
+);
 ```
 
 ### Low Latency Configuration
 
-```scala
-Map(
-  "batch.size"  -> "16384",      // Default 16 KB
-  "linger.ms"   -> "0",          // Send immediately
-  "acks"        -> "1",          // Don't wait for all replicas
-  "compression.type" -> "none",  // Skip compression overhead
-)
+```java
+var config = Map.of(
+    "batch.size"      , "16384", // Default 16 KB
+    "linger.ms"       , "0",     // Send immediately
+    "acks"            , "1",     // Don't wait for all replicas
+    "compression.type", "none"   // Skip compression overhead
+);
 ```
 
 ### Balanced Production Configuration
 
-```scala
-Map(
-  // Durability
-  "acks"              -> "all",
-  "enable.idempotence"-> "true",
+```java
+var config = Map.of(
+    // Durability
+    "acks"              , "all",
+    "enable.idempotence", "true",
 
-  // Batching
-  "batch.size"        -> "32768",
-  "linger.ms"         -> "5",
+    // Batching
+    "batch.size"        , "32768",
+    "linger.ms"         , "5",
 
-  // Compression
-  "compression.type"  -> "zstd",
+    // Compression
+    "compression.type"  , "zstd",
 
-  // Buffer
-  "buffer.memory"     -> "33554432",
-  "max.block.ms"      -> "60000",
+    // Buffer
+    "buffer.memory"     , "33554432",
+    "max.block.ms"      , "60000",
 
-  // Reliability
-  "delivery.timeout.ms"   -> "120000",
-  "request.timeout.ms"    -> "30000",
-  "max.in.flight.requests.per.connection" -> "5",
-)
+    // Reliability
+    "delivery.timeout.ms"   , "120000",
+    "request.timeout.ms"    , "30000",
+    "max.in.flight.requests.per.connection", "5"
+);
 ```
 
 ## Monitoring Producer Health
@@ -404,11 +408,11 @@ Map(
 
 ### Enabling Metrics
 
-```scala
-Map(
-  "metric.reporters" -> "org.apache.kafka.common.metrics.JmxReporter",
-  "metrics.recording.level" -> "DEBUG",  // INFO, DEBUG, or TRACE
-)
+```java
+var config = Map.of(
+    "metric.reporters"       , "org.apache.kafka.common.metrics.JmxReporter",
+    "metrics.recording.level", "DEBUG" // INFO, DEBUG, or TRACE
+);
 ```
 
 ## Best Practices Summary

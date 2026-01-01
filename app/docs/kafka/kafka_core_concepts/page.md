@@ -115,10 +115,10 @@ Every broker in the cluster has metadata about all other brokers:
 - A client can connect to any broker to get metadata about the entire cluster
 - In practice, it is common for Kafka clients to connect to multiple bootstrap servers to ensure high availability and fault tolerance
 
-```scala
+```java
 // Connecting to multiple bootstrap servers for fault tolerance
 props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG,
-  "broker1:9092,broker2:9092,broker3:9092")
+    "broker1:9092,broker2:9092,broker3:9092");
 ```
 
 ### Broker Responsibilities

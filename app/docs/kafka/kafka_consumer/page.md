@@ -122,12 +122,12 @@ Consumer A          Coordinator          Consumer B
 
 ### Enabling the New Protocol
 
-```scala
-val config = Map(
-  "group.protocol"       -> "consumer",  // Enable KIP-848
-  "group.remote.assignor"-> "uniform",   // Server-side assignor (uniform/range)
-  // Other standard configs...
-)
+```java
+var config = Map.of(
+    "group.protocol"       , "consumer", // Enable KIP-848
+    "group.remote.assignor", "uniform"   // Server-side assignor (uniform/range)
+    // Other standard configs...
+);
 ```
 
 **Requirements:**
@@ -163,12 +163,11 @@ val config = Map(
 | `StickyAssignor`            | Minimizes partition movement      | Reduce rebalance impact |
 | `CooperativeStickyAssignor` | Sticky + cooperative              | Production default      |
 
-```scala
+```java
 // Classic protocol with cooperative rebalancing
-val config = Map(
-  "partition.assignment.strategy" ->
-    "org.apache.kafka.clients.consumer.CooperativeStickyAssignor"
-)
+var config = Map.of(
+    "partition.assignment.strategy", "org.apache.kafka.clients.consumer.CooperativeStickyAssignor"
+);
 ```
 
 ## Offset Management
@@ -196,54 +195,62 @@ Value: (offset, leader_epoch, metadata, timestamp)
 
 **Auto Commit (Default)**
 
-```scala
-val config = Map(
-  "enable.auto.commit"      -> "true",
-  "auto.commit.interval.ms" -> "5000"
-)
+```java
+var config = Map.of(
+    "enable.auto.commit"     , "true",
+    "auto.commit.interval.ms", "5000"
+);
 // Danger: Offsets committed before processing completes
 ```
 
 **Synchronous After Batch**
 
-```scala
-while true do
-  val records = consumer.poll(Duration.ofMillis(100))
-  for record <- records.asScala do
-    process(record)
-  consumer.commitSync()  // Blocks until confirmed
+```java
+while (true) {
+    var records = consumer.poll(Duration.ofMillis(100));
+    for (var record : records) {
+        process(record);
+    }
+    consumer.commitSync(); // Blocks until confirmed
+}
 ```
 
 **Asynchronous with Callback**
 
-```scala
-while true do
-  val records = consumer.poll(Duration.ofMillis(100))
-  for record <- records.asScala do
-    process(record)
-  consumer.commitAsync { (offsets, exception) =>
-    if exception != null then
-      logger.warn(s"Commit failed: ${exception.getMessage}")
-  }
+```java
+while (true) {
+    var records = consumer.poll(Duration.ofMillis(100));
+    for (var record : records) {
+        process(record);
+    }
+    consumer.commitAsync((offsets, exception) -> {
+        if (exception != null) {
+            logger.warn("Commit failed: " + exception.getMessage());
+        }
+    });
+}
 ```
 
 **Per-Record with Batching**
 
-```scala
-var processed = 0
-val currentOffsets = mutable.Map[TopicPartition, OffsetAndMetadata]()
+```java
+int processed = 0;
+var currentOffsets = new HashMap<TopicPartition, OffsetAndMetadata>();
 
-while true do
-  val records = consumer.poll(Duration.ofMillis(100))
-  for record <- records.asScala do
-    process(record)
-    currentOffsets(TopicPartition(record.topic, record.partition)) =
-      OffsetAndMetadata(record.offset + 1)
-    processed += 1
+while (true) {
+    var records = consumer.poll(Duration.ofMillis(100));
+    for (var record : records) {
+        process(record);
+        currentOffsets.put(new TopicPartition(record.topic(), record.partition()),
+            new OffsetAndMetadata(record.offset() + 1));
+        processed++;
 
-    if processed % 100 == 0 then
-      consumer.commitSync(currentOffsets.asJava)
-      currentOffsets.clear()
+        if (processed % 100 == 0) {
+            consumer.commitSync(currentOffsets);
+            currentOffsets.clear();
+        }
+    }
+}
 ```
 
 ### Delivery Semantics Summary
@@ -312,20 +319,20 @@ When auto-commit is acceptable:
 
 ### New in Kafka 4.x: `auto.offset.reset` by Duration
 
-```scala
+```java
 // Reset to 24 hours ago instead of earliest/latest
-val config = Map(
-  "auto.offset.reset" -> "by_duration:PT24H"  // ISO 8601 duration
-)
+var config = Map.of(
+    "auto.offset.reset", "by_duration:PT24H" // ISO 8601 duration
+);
 ```
 
 ### Isolation Levels for Transactions
 
-```scala
-val config = Map(
-  "isolation.level" -> "read_committed"  // Only see committed transactional messages
-  // Default: "read_uncommitted"
-)
+```java
+var config = Map.of(
+    "isolation.level", "read_committed" // Only see committed transactional messages
+    // Default: "read_uncommitted"
+);
 ```
 
 ## The Poll Loop: Getting It Right
@@ -334,17 +341,17 @@ The `poll()` method is the consumer's heartbeat. Calling it regularly is crucial
 
 ### Basic Pattern
 
-```scala
-val consumer = KafkaConsumer[String, String](config.asJava)
-consumer.subscribe(List("orders").asJava)
+```java
+try (var consumer = new KafkaConsumer<String, String>(config)) {
+    consumer.subscribe(List.of("orders"));
 
-try
-  while running.get do
-    val records = consumer.poll(Duration.ofMillis(100))
-    for record <- records.asScala do
-      processRecord(record)
-finally
-  consumer.close()
+    while (running.get()) {
+        var records = consumer.poll(Duration.ofMillis(100));
+        for (var record : records) {
+            processRecord(record);
+        }
+    }
+}
 ```
 
 ### Handling Long Processing
@@ -353,38 +360,43 @@ If processing takes longer than `max.poll.interval.ms`, the consumer is consider
 
 **Solution 1: Pause/Resume**
 
-```scala
-val records = consumer.poll(Duration.ofMillis(100))
-consumer.pause(consumer.assignment)  // Stop fetching
+```java
+var records = consumer.poll(Duration.ofMillis(100));
+consumer.pause(consumer.assignment()); // Stop fetching
 
-for record <- records.asScala do
-  processSlowly(record)  // Can take time
+for (var record : records) {
+    processSlowly(record); // Can take time
+}
 
-consumer.resume(consumer.assignment)  // Resume fetching
+consumer.resume(consumer.assignment()); // Resume fetching
 ```
 
 **Solution 2: Increase Interval**
 
-```scala
-val config = Map(
-  "max.poll.interval.ms" -> "600000",  // 10 minutes
-  "max.poll.records"     -> "100"       // Smaller batches
-)
+```java
+var config = Map.of(
+    "max.poll.interval.ms", "600000", // 10 minutes
+    "max.poll.records"     , "100"    // Smaller batches
+);
 ```
 
 **Solution 3: Offload Processing**
 
-```scala
-val executor = Executors.newFixedThreadPool(10)
+```java
+var executor = Executors.newFixedThreadPool(10);
 
-while running.get do
-  val records = consumer.poll(Duration.ofMillis(100))
-  val futures = records.asScala.map { record =>
-    executor.submit(() => process(record))
-  }
-  // Wait for batch, then commit
-  futures.foreach(_.get())
-  consumer.commitSync()
+while (running.get()) {
+    var records = consumer.poll(Duration.ofMillis(100));
+    var futures = new ArrayList<Future<?>>();
+    for (var record : records) {
+        futures.add(executor.submit(() -> process(record)));
+    }
+    // Wait for batch, then commit
+    for (var future : futures) {
+        future.get();
+    }
+    consumer.commitSync();
+}
 ```
 
 ## Error Handling & Retry Strategy
@@ -397,31 +409,32 @@ Retry the operation within the poll loop.
 **Pros**: Preserves ordering.
 **Cons**: Blocks the consumer; can trigger group rebalance if retries exceed `max.poll.interval.ms`.
 
-```scala
-var retries = 0
-while retries < 3 do
-  try
-    process(record)
-    retries = 3 // Success
-  catch
-    case e: Exception =>
-      retries += 1
-      Thread.sleep(100 * retries)
-      if retries == 3 then throw e // Give up
+```java
+int retries = 0;
+while (retries < 3) {
+    try {
+        process(record);
+        retries = 3; // Success
+    } catch (Exception e) {
+        retries++;
+        Thread.sleep(100L * retries);
+        if (retries == 3) throw e; // Give up
+    }
+}
 ```
 
 ### 2. Dead Letter Queue (DLQ)
 
 If a message fails repeatedly (or is a known "poison pill"), publish it to a separate `dead-letter-topic` and commit the offset to move on.
 
-```scala
-try
-  process(record)
-catch
-  case e: Exception =>
-    logger.error(s"Failed to process, sending to DLQ", e)
-    producer.send(new ProducerRecord("my-app-dlq", record.key(), record.value()))
+```java
+try {
+    process(record);
+} catch (Exception e) {
+    logger.error("Failed to process, sending to DLQ", e);
+    producer.send(new ProducerRecord<>("my-app-dlq", record.key(), record.value()));
     // Functionally "consumed" even though processing failed
+}
 ```
 
 ### 3. Non-Blocking Retry (Advanced)
@@ -446,33 +459,36 @@ You cannot call methods on a single consumer instance from multiple threads. Acc
 
 React to partition assignment changes with `ConsumerRebalanceListener`:
 
-```scala
-consumer.subscribe(
-  List("orders").asJava,
-  new ConsumerRebalanceListener:
-    override def onPartitionsRevoked(partitions: util.Collection[TopicPartition]): Unit =
-      logger.info(s"Revoked: ${partitions.asScala.mkString(", ")}")
-      // Commit current progress before losing partitions
-      consumer.commitSync()
-      // Flush any in-memory state
-      stateStore.flush()
+```java
+consumer.subscribe(List.of("orders"), new ConsumerRebalanceListener() {
+    @Override
+    public void onPartitionsRevoked(Collection<TopicPartition> partitions) {
+        logger.info("Revoked: " + partitions);
+        // Commit current progress before losing partitions
+        consumer.commitSync();
+        // Flush any in-memory state
+        stateStore.flush();
+    }
 
-    override def onPartitionsAssigned(partitions: util.Collection[TopicPartition]): Unit =
-      logger.info(s"Assigned: ${partitions.asScala.mkString(", ")}")
-      // Initialize state for new partitions
-      for tp <- partitions.asScala do
-        stateStore.initialize(tp)
-)
+    @Override
+    public void onPartitionsAssigned(Collection<TopicPartition> partitions) {
+        logger.info("Assigned: " + partitions);
+        // Initialize state for new partitions
+        for (var tp : partitions) {
+            stateStore.initialize(tp);
+        }
+    }
+});
 ```
 
 ## Static Group Membership
 
 Prevent unnecessary rebalances during rolling restarts with static membership:
 
-```scala
-val config = Map(
-  "group.instance.id" -> s"order-processor-${hostname}"
-)
+```java
+var config = Map.of(
+    "group.instance.id", "order-processor-" + hostname
+);
 ```
 
 With static membership:
@@ -487,11 +503,11 @@ In cloud environments (AWS, GCP), cross-zone data transfer is expensive and adds
 
 ### Configuration
 
-```scala
-val config = Map(
-  "client.rack" -> "us-east-1a",  // The zone this consumer is running in
-  // Brokers must also have broker.rack configured
-)
+```java
+var config = Map.of(
+    "client.rack", "us-east-1a" // The zone this consumer is running in
+    // Brokers must also have broker.rack configured
+);
 ```
 
 **Benefits:**
