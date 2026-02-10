@@ -9,7 +9,7 @@ const meta: MetaRecord = {
   database: 'Database',
   engineering: 'Engineering',
   architecture: 'Architecture',
-  containerization: 'Containerization',
+  devops: 'DevOps',
   aws_saa: 'AWS SAA',
   misc: 'Miscellaneous'
 };
